@@ -20,7 +20,7 @@ pip3 install RISE
 jupyter-nbextension install rise --py --sys-prefix
 jupyter nbextension enable rise --py --sys-prefix
 
-pip3 install tensorflow==1.15.0 sklearn seaborn
+pip3 install tensorflow==1.15.0 sklearn seaborn bertviz
 pip3 install transformers
 
 pip3 install torch==1.7.1+cpu torchvision==0.8.2+cpu -f https://download.pytorch.org/whl/torch_stable.html
