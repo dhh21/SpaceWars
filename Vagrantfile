@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
     config.vm.box = "hashicorp/bionic64"
   
     # config.vm.box_check_update = false
-    config.vm.network "forwarded_port", guest: 8888, host: 8888
+    config.vm.network "forwarded_port", guest: 8888, host: 8080
     config.vm.network "forwarded_port", guest: 6006, host: 6006 # tensorboard
     
     # config.vm.network "forwarded_port", guest: 8000, host: 8000
