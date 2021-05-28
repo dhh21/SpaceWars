@@ -1,0 +1,62 @@
+PREFIX wd: <http://www.wikidata.org/entity/> 
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?subject ?label ?coordinates ?LOClabel ?location ?country
+#IF(
+#   ( datatype (?start) in (xsd:dateTime, xsd:date))
+#   &&( datatype (?end) in (xsd:dateTime, xsd:date)), 
+#   bif:datediff( 'day', xsd:dateTime( str(?start) ), xsd:dateTime( str(?end) ) ), "error" ) as ?Duration
+ 
+(CONCAT(STR(YEAR(?date)),"-",STR(MONTH(?date)),"-",STR(DAY(?date))) as ?displaydate) 
+(CONCAT(STR(YEAR(?start)),"-",STR(MONTH(?start)),"-",STR(DAY(?start))) as ?displaystart) 
+(CONCAT(STR(YEAR(?end)),"-",STR(MONTH(?end)),"-",STR(DAY(?end))) as ?displayend) 
+#(bif:datediff('day', xsd:dateTime( str(?start) ), xsd:dateTime( str(?end) ) ) as ?Duration)
+
+WHERE {
+  ?subject wdt:P31 wd:Q178561 . 
+# ?subject wdt:P361 wd:Q1418209 .
+ ?subject wdt:P361 wd:Q79911.
+# ?subject wdt:P361 wd:Q1723036
+           
+#  westFront
+#  ?subject wdt:P361 wd:Q152989 .
+#  ?subject wdt:P361 wd:Q1765465.
+#  wd:Q361 wdt:P793 ?subject.
+  OPTIONAL { ?subject rdfs:label ?label FILTER (lang(?label) = "en") . }
+  OPTIONAL { ?subject wdt:P580 ?start . }
+  OPTIONAL { ?subject wdt:P582 ?end . }
+  OPTIONAL { ?subject wdt:P625 ?coordinates . }
+  OPTIONAL { ?subject wdt:P276 ?location .
+             ?location wdt:P625 ?coordinates . }
+  OPTIONAL { ?subject wdt:P276 ?location . }
+  OPTIONAL { ?subject wdt:P585 ?date . }
+  OPTIONAL { ?subject wdt:P17 ?countryID .
+             ?countryID rdfs:label ?country FILTER (lang(?country) = "en") .}
+  OPTIONAL { ?subject wdt:P276 ?location .
+             ?location wdt:P17 ?countryID .
+             ?countryID rdfs:label ?country FILTER (lang(?country) = "en") .}  
+  
+  OPTIONAL { ?subject wdt:P276 ?location .
+             ?location wdt:P17 ?countryID .}
+  
+  OPTIONAL { ?subject wdt:P276 ?location .
+             ?location rdfs:label ?LOClabel FILTER (lang(?LOClabel) = "en") .}
+  
+
+#Bind ( (day(?start) - day(?end) as ?Duration) )
+
+#  OPTIONAL {
+#   ?subject wdt:P361 ?war .
+#   ?war wdt:P580 ?start .
+#   ?war wdt:P582 ?end .
+#     }  
+  
+#  FILTER (YEAR(?start) > 1915 && YEAR(?start) < 1917) 
+#  FILTER (YEAR(?end) > 1911 && YEAR(?end) < 1920) 
+   FILTER (?label != "") 
+   FILTER (?LOClabel != "") 
+#  FILTER (?location != "") 
+#  FILTER (?coordinates != "")  
+             }
