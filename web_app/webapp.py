@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 import plotly.express as px
 import numpy as np
 from shapely import wkt
-import contextily as ctx
+# import contextily as ctx
 from glob import glob
 from datetime import datetime
 
@@ -109,9 +109,6 @@ def open_battle_file(filepath):
     geo_df = gpd.GeoDataFrame(df, crs=crs, geometry=geometry)
     del geo_df['coordinates']
     return geo_df
-
-mapbox_token = '.mapbox_token'
-px.set_mapbox_access_token(open(mapbox_token).read())
 
 
 # geo_df = open_file('data/combined_data_arbeiter_zeitung_1915.csv')
