@@ -256,6 +256,10 @@ end_date = pn.widgets.DatePicker(name='End Date',
                                    # enabled_dates = list(map_df['date'].values),
                                    )
 
+# filtered_df = filtered_df[
+#     (filtered_df['freq'] >= int(min_freq))
+#     & (filtered_df['freq'] <= int(max_freq))
+# ]
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = '1'
                                 )
@@ -263,6 +267,7 @@ min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder =
 max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = map_df['freq'].max().astype('str')
                                 )
+battle_duration = pn.widgets.IntSlider(name='Battle duration (days)', start=1, end=int(battles['Duration'].max()), step=1, value=4)
 
 @pn.depends(lg_select.param.value, newspapers_select.param.value, year_select.param.value)
 def get_plot(lg_select, newspapers_select, year_select):
@@ -295,7 +300,8 @@ def plot(self):
 row = pn.Row(
     pn.Column(lg_select, newspapers_select, year_select,
               start_date, end_date,
-              min_freq, max_freq),
+              min_freq, max_freq,
+              battle_duration),
     get_plot
 )
 
@@ -314,10 +320,7 @@ row.servable()
 #
 #
 
-# filtered_df = filtered_df[
-#     (filtered_df['freq'] >= int(min_freq))
-#     & (filtered_df['freq'] <= int(max_freq))
-# ]
+
 # if not filtered_battles.empty:
 #     duration_slider = st.sidebar.slider('Battle duration:',
 #                                         int(filtered_battles['Duration'].min()),
