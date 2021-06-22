@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import streamlit as st
 import geopandas as gpd
@@ -74,6 +76,7 @@ def open_file(filepath):
             if col.startswith('Unnamed'):
                 del df[col]
         df['date'] = pd.to_datetime(df['date'], format="%Y-%m-%d")
+        df['anim_date'] = df['date'].dt.strftime('%B-%Y')
         df['year'] = pd.DatetimeIndex(df['date']).year
         df['year'] = df['year'].astype(str)
 
@@ -289,44 +292,55 @@ if not filtered_battles.empty:
 groupby_data = filtered_df.groupby('geometry')
 map_df = groupby_data.first()
 
-borders = open_borders('data/borders/borders.shp')
+# borders = open_borders('data/borders/borders.shp')
 
-filtered_borders = borders[
+bordersdf = pd.read_csv('data/borders/countryborders.csv')
+filtered_borders = json.load(open('data/testshape.geojson'))
 
-    # end date of border must be below start date filter
-    # (borders['edate'] >= np.datetime64(start_date))
-    (borders['gwsdate'] <= np.datetime64(end_date))
-]
+# filtered_borders = borders[
+#
+#     # end date of border must be below start date filter
+#     # (borders['edate'] >= np.datetime64(start_date))
+#     (borders['gwsdate'] <= np.datetime64(end_date))
+# ]
 
-# geojson = geojson.groupby('NAME').first().reset_index()
-# geojson = geojson.set_index('NAME')
-filtered_borders = filtered_borders.groupby('cntry_name').first().reset_index()
-filtered_borders = filtered_borders.set_index('cntry_name')
-filtered_borders = filtered_borders.iloc[:10]
-fig = px.choropleth(filtered_borders, geojson=filtered_borders['geometry'],
-                    locations=filtered_borders.index,
-                    color=filtered_borders.index,
-                    width=1000, height=700, # width and height of the plot
+# filtered_borders = filtered_borders.groupby('cntry_name').first().reset_index()
+# filtered_borders = filtered_borders.set_index('cntry_name')
+# filtered_borders = filtered_borders.iloc[:10]
+# fig = px.choropleth(filtered_borders, geojson=filtered_borders['geometry'],
+#                     locations=filtered_borders.index,
+#                     color=filtered_borders.index,
+#                     width=1000, height=700, # width and height of the plot
+#
+#                     )
 
-                    )
+
 
 ##  Plotting
-# fig = px.scatter_mapbox(map_df, lat='lat', lon='lon', #data and col. to use for plotting
-#                         hover_name = 'mention',
-#                         hover_data = ['freq'],
-#                           size = 'freq', # sets the size of each points on the values in the frequencies col.
-#                         # animation_frame = 'year',
-#                         center = dict(lat=53, lon=16), #centers the map on specific coordinates
-#                         zoom = 3, # zooms on these coordinates
-#                         width=1000, height=700, # width and height of the plot
-#                         )
+st.header('War map')
+## need to cast date column to str in order to use it with the animation frame
+map_df['anim_date'] = map_df['anim_date'].astype(str)
 
-## Adds capital on the map
+fig = px.scatter_geo(map_df, lat='lat', lon='lon', #data and col. to use for plotting
+                        hover_name = 'mention',
+                        hover_data = ['txthover'],
+                          size = 'freq', # sets the size of each points on the values in the frequencies col.
+                        animation_frame = 'anim_date',
+                        # center = dict(lat=53, lon=16), #centers the map on specific coordinates
+                        # zoom = 3, # zooms on these coordinates
+                        width=1000, height=700, # width and height of the plot
+                        )
+
+fig['data'][0]['showlegend']=True
+fig['data'][0]['name']='Named Entity frequencies'
+fig['data'][0]['legendgroup']= 'Frequencies'
+
+# ## Adds capital on the map
 fig.add_scattergeo(
-        lat=filtered_borders['caplat'],
-        lon=filtered_borders['caplong'],
+        lat=bordersdf['caplat'],
+        lon=bordersdf['caplong'],
         mode='markers',
-        hovertext = filtered_borders['capname'],
+        hovertext = bordersdf['capname'],
         marker_symbol = 'hexagon',
         marker=go.scattergeo.Marker(
             size = 10
@@ -342,28 +356,36 @@ fig.add_scattergeo(
         hoverinfo='text'
     )
 
-# fig['data'][0]['showlegend']=True
-# fig['data'][0]['name']='Named Entity frequencies'
-# fig['data'][0]['legendgroup']= 'Frequencies'
-fig.add_scattergeo(
-        lat=map_df['lat'],
-        lon=map_df['lon'],
-        mode='markers',
-        hovertext = map_df['txthover'],
-        marker=go.scattergeo.Marker(
-            size=map_df['freq'],
-            sizemode='area',
-            sizeref=map_df['freq'].max() / 15 ** 2
-            # color='rgb(255, 0, 0)',
-            # color= filtered_battles['Duration'],
-            # showscale = True,
-            # colorscale='Blackbody',
-            # opacity=0.7
-        ),
-        hoverinfo='text'
-    )
+fig.add_choropleth(
+    geojson=filtered_borders,
+    featureidkey='properties.cntry_name',
+    locationmode='geojson-id',
+    locations=bordersdf['cntry_name'],
+    z = bordersdf['area'],
+    showscale=False
+)
+fig['data'][1]['name'] = 'Capitals'
 
-## Adding battle points
+
+# fig.add_scattergeo(
+#         lat=map_df['lat'],
+#         lon=map_df['lon'],
+#         mode='markers',
+#         hovertext = map_df['txthover'],
+#         marker=go.scattergeo.Marker(
+#             size=map_df['freq'],
+#             sizemode='area',
+#             sizeref=map_df['freq'].max() / 15 ** 2
+#             # color='rgb(255, 0, 0)',
+#             # color= filtered_battles['Duration'],
+#             # showscale = True,
+#             # colorscale='Blackbody',
+#             # opacity=0.7
+#         ),
+#         hoverinfo='text'
+#     )
+
+# Adding battle points
 fig.add_scattergeo(
         lat=filtered_battles['lat'],
         lon=filtered_battles['lon'],
@@ -380,7 +402,8 @@ fig.add_scattergeo(
         ),
         hoverinfo='text'
     )
-# st.header('War map')
+fig['data'][2]['name'] = 'Battle duration'
+
 # map_style = st.selectbox('Choose a map style:',
 #                                  # these a free maps that do not require a mapbox token
 #                          ["open-street-map", "carto-positron", "carto-darkmatter", "stamen-terrain",
@@ -389,20 +412,19 @@ fig.add_scattergeo(
 #                           ])
 #
 #
-# fig.update_layout(
-#     margin = dict(l=0),
-#     # mapbox_style = map_style,
-#     legend=dict(
-#     bgcolor='ivory',
-#     bordercolor='lightgray',
-#     borderwidth=1,
-#     font = dict(color='black'),
-#     yanchor="top",
-#     y=0.99,
-#     xanchor="left",
-#     x=0.01)
-# )
-# fig['data'][1]['name'] = 'Battle duration'
+fig.update_layout(
+    margin = dict(l=0),
+    # mapbox_style = map_style,
+    legend=dict(
+    bgcolor='ivory',
+    bordercolor='lightgray',
+    borderwidth=1,
+    font = dict(color='black'),
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01)
+)
 # fig.update_layout(
 #
 #         mapbox_layers=[
@@ -446,7 +468,7 @@ def get_window(text, window, left=True):
     else:
         return ""
 
-st.header('Context visualizer')
+st.header('Concordancer')
 page_slider = st.slider(
     'Select entities mention',
     0, len(filtered_df), 50
