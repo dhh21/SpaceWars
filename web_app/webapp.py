@@ -2,6 +2,8 @@ import json
 
 import pandas as pd
 import streamlit as st
+from streamlit_plotly_events import plotly_events
+
 import geopandas as gpd
 import plotly.graph_objs as go
 import plotly.express as px
@@ -331,9 +333,12 @@ fig = px.scatter_geo(map_df, lat='lat', lon='lon', #data and col. to use for plo
                         width=1000, height=700, # width and height of the plot
                         )
 
+
+
 fig['data'][0]['showlegend']=True
 fig['data'][0]['name']='Named Entity frequencies'
 fig['data'][0]['legendgroup']= 'Frequencies'
+
 
 # ## Adds capital on the map
 fig.add_scattergeo(
@@ -356,15 +361,15 @@ fig.add_scattergeo(
         hoverinfo='text'
     )
 
-fig.add_choropleth(
-    geojson=filtered_borders,
-    featureidkey='properties.cntry_name',
-    locationmode='geojson-id',
-    locations=bordersdf['cntry_name'],
-    z = bordersdf['area'],
-    showscale=False
-)
-fig['data'][1]['name'] = 'Capitals'
+# fig.add_choropleth(
+#     geojson=filtered_borders,
+#     featureidkey='properties.cntry_name',
+#     locationmode='geojson-id',
+#     locations=bordersdf['cntry_name'],
+#     z = bordersdf['area'],
+#     showscale=False
+# )
+# fig['data'][1]['name'] = 'Capitals'
 
 
 # fig.add_scattergeo(
@@ -445,11 +450,10 @@ fig.update_layout(
 #       ]
 # )
 
-
-# )
 # fig.update_layout()
-
-st.plotly_chart(fig)
+# selected_points = plotly_events(fig, )
+# st.plotly_chart(fig.to_json())
+# st.plotly_chart(fig)
 
 
 ##################### PAGE LAYOUT #################
@@ -469,13 +473,22 @@ def get_window(text, window, left=True):
         return ""
 
 st.header('Concordancer')
-page_slider = st.slider(
-    'Select entities mention',
-    0, len(filtered_df), 50
-)
+print("SELECTED POINTS" , selected_points)
+if selected_points:
+    point_index = selected_points[0]['pointIndex']
+    page_slider = st.slider(
+        'Select entities mention',
+        0, len(filtered_df), int(point_index)
+    )
+else:
+    page_slider = st.slider(
+        'Select entities mention',
+        0, len(filtered_df), 50
+    )
+print("page_slider", page_slider)
 window_slider = st.slider('Select context window', 1, 10, 5)
 
-df_page = filtered_df.iloc[page_slider:page_slider + 50]
+df_page = filtered_df.loc[page_slider:page_slider + 50]
 
 def convert(row, col, text):
     # print(text)
@@ -533,12 +546,5 @@ table.update_layout(
     margin=dict(l=0, r=0),
 
 )
-# title=['Hi Dash','Hello World']
-# link=[html.A(html.P('Link'),href="yahoo.com"),html.A(html.P('Link'),href="google.com")]
-#
-# dictionary={"title":title,"link":link}
-# df=pd.DataFrame(dictionary)
-# table=dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True)
-# table
+
 st.plotly_chart(table)
-# st.plotly_chart(df_page.to_dict('records'))r
