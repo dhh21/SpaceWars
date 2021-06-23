@@ -297,7 +297,7 @@ map_df = groupby_data.first()
 # borders = open_borders('data/borders/borders.shp')
 
 bordersdf = pd.read_csv('data/borders/countryborders.csv')
-filtered_borders = json.load(open('data/testshape.geojson'))
+filtered_borders = json.load(open('data/borders/countryborders.geojson'))
 
 # filtered_borders = borders[
 #
