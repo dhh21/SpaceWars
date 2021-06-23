@@ -1,20 +1,34 @@
-import panel as pn
 import param
+import panel as pn
+from bokeh.sampledata.autompg import autompg
+
 import plotly.graph_objs as go
 import json
 import pandas as pd
-# import streamlit as st
-# from streamlit_plotly_events import plotly_events
-
 import geopandas as gpd
 import plotly.express as px
-import numpy as np
 from shapely import wkt
 from glob import glob
 from datetime import datetime
 
+css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
+       # Below: Needed for export buttons
+       'https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css'
+]
+js = {
+    '$': 'https://code.jquery.com/jquery-3.5.1.js',
+    'DataTable': 'https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js',
+    # Below: Needed for export buttons
+    'buttons': 'https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js',
+    'jszip': 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js',
+    'pdfmake': 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js',
+    'vfsfonts': 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js',
+    'html5buttons': 'https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js',
+}
+
 epsg = 4326
 pn.extension()
+pn.extension(css_files=css, js_files=js)
 pn.extension("plotly")
 # pn.config.sizing_mode = "stretch_width"
 
@@ -151,6 +165,11 @@ dic_lg = {
     "German": 'de',
     "Finnish": 'fi',
     "French": 'fr'
+}
+reversed_lg = {
+    'de': "German",
+    'fi': "Finnish",
+    'fr': 'French'
 }
 dic_news = {
     "Arbeiter Zeitung":'arbeiter_zeitung',
@@ -299,6 +318,7 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
                                      options = list(battles['Notes'].unique())
                                          )
 
+markdown = pn.pane.Markdown("",)
 #
 #     filtered_battles = filtered_battles[filtered_battles['Notes'].isin(front_selection)]
 
@@ -314,6 +334,12 @@ def get_map_plot(lg_select, newspapers_select, year_select):
     #                         # zoom = 3, # zooms on these coordinates
     #                         width=1000, height=700, # width and height of the plot
     #                         )
+    # fig = px.choropleth(filtered_borders, geojson=filtered_borders['geometry'],
+    #                     locations=filtered_borders.index,
+    #                     color=filtered_borders.index,
+    #                     width=1000, height=700, # width and height of the plot
+    #
+    #                     )
     fig = go.Figure()
 
     fig.add_choropleth(
@@ -377,12 +403,12 @@ def get_map_plot(lg_select, newspapers_select, year_select):
             ),
             hoverinfo='text'
         )
-    fig['data'][3]['name'] = 'Battle duration'
+    fig['data'][3]['name'] = 'Battles'
 
     fig.update_layout(
         margin = dict(l=0),
-        width=1000,
-        height=700, # width and height of the plot
+        # width=1000,
+        # height=700, # width and height of the plot
         # mapbox_style = map_style,
         legend=dict(
         bgcolor='ivory',
@@ -395,12 +421,15 @@ def get_map_plot(lg_select, newspapers_select, year_select):
         x=0.01)
     )
 
-    plot_panel = pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
-
+    plot_panel = pn.pane.Plotly(fig, config={"responsive": True})
+    # pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
     ## adds callback when clicking on that plot
-    @pn.depends(plot_panel.param.click_data)
+    @pn.depends(plot_panel.param.click_data, watch=True)
     def string_hello_world(click_data):
-        print("CLICK DATA", click_data)
+        point = click_data['points'][0]
+        dict_data = json.dumps(point)
+        print("CLICK DATA", dict_data)
+        markdown.object = dict_data
         return click_data
 
     @pn.depends(plot_panel.param.click_data, watch=True)
@@ -416,6 +445,70 @@ def plot(self):
 # def create_app():
 #     return pn.Row(self.param, self.plot)
 
+script = """
+<script>
+if (document.readyState === "complete") {
+  $('.example').DataTable();
+} else {
+  $(document).ready(function () {
+    $('.example').DataTable();
+  })
+}
+</script>
+"""
+
+def get_window(text, window=5, left=True):
+    """
+    """
+    if isinstance(text, str):
+        l_text = text.split()
+        if not len(l_text) < window:
+            if left:
+                l_text = l_text[-window:]
+            else:
+                l_text = l_text[:window]
+
+        return " ".join(l_text)
+    else:
+        return ""
+
+def convert(row, col, text):
+    # print(text)
+    data = row[col]
+    if isinstance(data, str):
+        return '<a href="{}">{}</a>'.format(data,  text)
+    else:
+        return 'No link available'
+df_page = map_df.reset_index()
+window_slider = 5 ## TODO: ADD WINDOW SLIDER WIDGET
+df_page['article_link'] = df_page.apply(convert, args=('article_link', 'View Article'), axis=1)
+df_page['wikidata_link'] = df_page.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
+df_page['date'] = pd.DatetimeIndex(df_page['date']).strftime("%Y-%m-%d")
+df_page['context_word_window'] = window_slider
+df_page['left_context'] = df_page['left_context'].apply(lambda x: get_window(x, window_slider))
+df_page['right_context'] = df_page['right_context'].apply(lambda x: get_window(x, window_slider, left=False))
+
+
+df_page['lang'] = df_page['lang'].apply(lambda x: reversed_lg[x])
+df_page = df_page[['newspaper', 'date', 'lang', 'context_word_window','left_context', 'mention', 'right_context',
+            'article_link', 'wikidata_link']]
+# df_page = df_page[['newspaper', 'date']]
+
+# html = autompg.to_html(classes=['example', 'panel-df'])
+html = df_page.iloc[:500].to_html(classes=['example', 'panel-df'])
+table = pn.pane.HTML(html+script)
+# table = pn.pane.HTML(html+script, sizing_mode='stretch_width')
+
+setting_col = pn.Column(pn.pane.Markdown('### Options'),
+            lg_select, newspapers_select, year_select,
+              start_date, end_date,
+              min_freq, max_freq,
+              battle_duration, front_selection)
+
+war_col = pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
+        pn.pane.Markdown('## War Map'),
+        get_map_plot,
+                    )
 row = pn.Row(
     pn.Column(pn.pane.Markdown('### Options'),
             lg_select, newspapers_select, year_select,
@@ -424,32 +517,73 @@ row = pn.Row(
               battle_duration, front_selection),
     pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
         pn.pane.Markdown('## War Map'),
-        get_map_plot
-              )
+        get_map_plot,
+              table),
+    markdown
+
 
 )
-
 row.servable()
+## TODO: USE GRID SPEC TO LAYOUT EVERYTHING AND MAKE IT RESPONSIVE
+# gspec = pn.GridSpec(sizing_mode='stretch_both', max_height=800)
+# gspec[0, :] = pn.pane.Markdown('#WEBAPP TITLE')
+# gspec[1:, 0] = setting_col
+# # gspec[2, :] = war_col
+# gspec[1, 1] = pn.pane.Markdown('## War Map')
+# gspec[2, 1] = get_map_plot
+# gspec[2, 1] = table
+# gspec.servable()
 
-# filtered_borders = filtered_borders.groupby('cntry_name').first().reset_index()
-# filtered_borders = filtered_borders.set_index('cntry_name')
-# filtered_borders = filtered_borders.iloc[:10]
-# fig = px.choropleth(filtered_borders, geojson=filtered_borders['geometry'],
-#                     locations=filtered_borders.index,
-#                     color=filtered_borders.index,
-#                     width=1000, height=700, # width and height of the plot
+# st.header('Concordancer')
+# print("SELECTED POINTS" , selected_points)
+# if selected_points:
+#     point_index = selected_points[0]['pointIndex']
+#     page_slider = st.slider(
+#         'Select entities mention',
+#         0, len(filtered_df), int(point_index)
+#     )
+# else:
+#     page_slider = st.slider(
+#         'Select entities mention',
+#         0, len(filtered_df), 50
+#     )
+# print("page_slider", page_slider)
+# window_slider = st.slider('Select context window', 1, 10, 5)
 #
-#                     )
-
-
-
-
-# map_style = st.selectbox('Choose a map style:',
-#                                  # these a free maps that do not require a mapbox token
-#                          ["open-street-map", "carto-positron", "carto-darkmatter", "stamen-terrain",
-#                           "stamen-toner", "stamen-watercolor",
-#                           # 'white-bg'
-#                           ])
-#
+# df_page = filtered_df.loc[page_slider:page_slider + 50]
 #
 
+#
+# header_values = df_page.columns
+# cell_values = [df_page['newspaper'], df_page['date'], df_page['lang'], df_page['context_word_window'], df_page['left_context'], df_page['mention'],
+#                           df_page['right_context'], df_page['article_link'], df_page['wikidata_link']]
+#
+#
+# table = go.Figure(
+#     data=[
+#         go.Table(
+#             columnwidth=[80, 60, 40, 100, 100, 100, 100, 80, 80] ,
+#             header = dict(
+#                 values= df_page.columns,
+#                 # fill_color="paleturquoise",
+#                 align="left",
+#                 font=dict(color='black')
+#             ),
+#             cells = dict(
+#                 values = cell_values,
+#                 font=dict(color='black'),
+#                 align="left"
+#             )
+#         )
+#     ],
+#     # layout = dict(autosize=True)
+# )
+# table.update_layout(
+#     autosize=False,
+#     width=1100,
+#     height=1000,
+#     margin=dict(l=0, r=0),
+#
+# )
+#
+# st.plotly_chart(table)
