@@ -210,7 +210,40 @@ def filter_files(all_files, lg_select, newspapers_select, year_select):
     geo_df = get_entities_hover_text(geo_df)
     return geo_df
 
+script = """
+<script>
+if (document.readyState === "complete") {
+  $('.example').DataTable();
+} else {
+  $(document).ready(function () {
+    $('.example').DataTable();
+  })
+}
+</script>
+"""
 
+def get_window(text, window=5, left=True):
+    """
+    """
+    if isinstance(text, str):
+        l_text = text.split()
+        if not len(l_text) < window:
+            if left:
+                l_text = l_text[-window:]
+            else:
+                l_text = l_text[:window]
+
+        return " ".join(l_text)
+    else:
+        return ""
+
+def convert(row, col, text):
+    # print(text)
+    data = row[col]
+    if isinstance(data, str):
+        return '<a href="{}">{}</a>'.format(data,  text)
+    else:
+        return 'No link available'
 
 
 lg_select = pn.widgets.MultiSelect(name= 'Language Selection',
@@ -239,6 +272,15 @@ def get_df(all_files):
     ## maps the value of the column geometry with their value counts
     ## then groups by geometry / data point
     geo_df['freq'] = geo_df['geometry'].map(geo_df['geometry'].value_counts())
+    window_slider = 5  ## TODO: ADD WINDOW SLIDER WIDGET
+    geo_df['article_link'] = geo_df.apply(convert, args=('article_link', 'View Article'), axis=1)
+    geo_df['wikidata_link'] = geo_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
+    # geo_df['date'] = pd.DatetimeIndex(geo_df['date']).strftime("%Y-%m-%d")
+    geo_df['context_word_window'] = window_slider
+    geo_df['left_context'] = geo_df['left_context'].apply(lambda x: get_window(x, window_slider))
+    geo_df['right_context'] = geo_df['right_context'].apply(lambda x: get_window(x, window_slider, left=False))
+    geo_df['lang'] = geo_df['lang'].apply(lambda x: reversed_lg[x])
+
     # print(geo_df)
 
     return geo_df
@@ -318,12 +360,19 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
                                      options = list(battles['Notes'].unique())
                                          )
 
-markdown = pn.pane.Markdown("",)
+# empty at first, display data about entity when clicked on it
+## TODO: DISPLAY DATA ABOUT CAPITALS AND BATTLES AS WELL ?
+entity_display = pn.pane.Markdown("",)
+
+
+
+
+
 #
 #     filtered_battles = filtered_battles[filtered_battles['Notes'].isin(front_selection)]
 
 @pn.depends(lg_select.param.value, newspapers_select.param.value, year_select.param.value)
-def get_map_plot(lg_select, newspapers_select, year_select):
+def get_map_plot():
 
     # fig = px.scatter_geo(map_df, lat='lat', lon='lon', #data and col. to use for plotting
     #                         hover_name = 'mention',
@@ -421,169 +470,101 @@ def get_map_plot(lg_select, newspapers_select, year_select):
         x=0.01)
     )
 
+    df_page = map_df.reset_index()
+    df_page = df_page[['left_context', 'mention', 'right_context' ]]
+        # df_page[['newspaper', 'date', 'lang', 'context_word_window', 'left_context', 'mention', 'right_context',
+        #                'article_link', 'wikidata_link']]
+    # df_page = df_page[['newspaper', 'date']]
+
+    # html = autompg.to_html(classes=['example', 'panel-df'])
+    html = df_page.to_html(classes=['example', 'panel-df'])
+    table = pn.pane.HTML(html + script)
+
     plot_panel = pn.pane.Plotly(fig, config={"responsive": True})
     # pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
     ## adds callback when clicking on that plot
     @pn.depends(plot_panel.param.click_data, watch=True)
     def string_hello_world(click_data):
         point = click_data['points'][0]
-        dict_data = json.dumps(point)
-        print("CLICK DATA", dict_data)
-        markdown.object = dict_data
+        pointindex = point['pointIndex']
+        entity_data = map_df.iloc[pointindex]
+        print(entity_data)
+
+        md_template = f"""<b>Entity</b>:{entity_data['mention']}<br>
+        <b>Newspaper</b>: {entity_data['newspaper']}<br>
+        <b>Language</b>: {entity_data['lang']}<br>
+        <b>Date</b>: {entity_data['date'].strftime("%d %B %Y")}<br>
+        <b>NewsEye link</b>: {entity_data['article_link']}<br>
+        <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
+        <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
+        # dict_data = json.dumps(point)
+        # print("CLICK DATA", dict_data)
+        entity_display.object = md_template
+        new_html = df_page.iloc[point['pointIndex'] :].to_html(classes=['example', 'panel-df']) + script
+        table.object = new_html
         return click_data
 
-    @pn.depends(plot_panel.param.click_data, watch=True)
-    def print_hello_world(click_data):
-        print("hello world", click_data)
+    # @pn.depends(plot_panel.param.click_data, watch=True)
+    # def print_hello_world(click_data):
+    #     print("hello world", click_data)
 
-    return plot_panel
+    return plot_panel, table
 
-@param.depends('lg_select', 'newspapers_select', 'year_select')
-def plot(self):
-    return self.get_plot()
+# @param.depends('lg_select', 'newspapers_select', 'year_select')
+# def plot(self):
+#     return self.get_plot()
 
 # def create_app():
 #     return pn.Row(self.param, self.plot)
 
-script = """
-<script>
-if (document.readyState === "complete") {
-  $('.example').DataTable();
-} else {
-  $(document).ready(function () {
-    $('.example').DataTable();
-  })
-}
-</script>
-"""
-
-def get_window(text, window=5, left=True):
-    """
-    """
-    if isinstance(text, str):
-        l_text = text.split()
-        if not len(l_text) < window:
-            if left:
-                l_text = l_text[-window:]
-            else:
-                l_text = l_text[:window]
-
-        return " ".join(l_text)
-    else:
-        return ""
-
-def convert(row, col, text):
-    # print(text)
-    data = row[col]
-    if isinstance(data, str):
-        return '<a href="{}">{}</a>'.format(data,  text)
-    else:
-        return 'No link available'
-df_page = map_df.reset_index()
-window_slider = 5 ## TODO: ADD WINDOW SLIDER WIDGET
-df_page['article_link'] = df_page.apply(convert, args=('article_link', 'View Article'), axis=1)
-df_page['wikidata_link'] = df_page.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
-df_page['date'] = pd.DatetimeIndex(df_page['date']).strftime("%Y-%m-%d")
-df_page['context_word_window'] = window_slider
-df_page['left_context'] = df_page['left_context'].apply(lambda x: get_window(x, window_slider))
-df_page['right_context'] = df_page['right_context'].apply(lambda x: get_window(x, window_slider, left=False))
-
-
-df_page['lang'] = df_page['lang'].apply(lambda x: reversed_lg[x])
-df_page = df_page[['newspaper', 'date', 'lang', 'context_word_window','left_context', 'mention', 'right_context',
-            'article_link', 'wikidata_link']]
-# df_page = df_page[['newspaper', 'date']]
-
-# html = autompg.to_html(classes=['example', 'panel-df'])
-html = df_page.iloc[:500].to_html(classes=['example', 'panel-df'])
-table = pn.pane.HTML(html+script)
 # table = pn.pane.HTML(html+script, sizing_mode='stretch_width')
 
-setting_col = pn.Column(pn.pane.Markdown('### Options'),
-            lg_select, newspapers_select, year_select,
+# setting_col = pn.Column(pn.pane.Markdown('### Options'),
+#             lg_select, newspapers_select, year_select,
+#               start_date, end_date,
+#               min_freq, max_freq,
+#               battle_duration, front_selection)
+#
+# war_col = pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
+#         pn.pane.Markdown('## War Map'),
+#         get_map_plot,
+#                     )
+
+# bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
+warmap, table = get_map_plot()
+
+template = pn.template.MaterialTemplate(title='WEBAPP')
+for widget in [lg_select, newspapers_select, year_select,
               start_date, end_date,
               min_freq, max_freq,
-              battle_duration, front_selection)
+              battle_duration, front_selection]:
+    template.sidebar.append(widget)
 
-war_col = pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
-        pn.pane.Markdown('## War Map'),
-        get_map_plot,
-                    )
-row = pn.Row(
-    pn.Column(pn.pane.Markdown('### Options'),
-            lg_select, newspapers_select, year_select,
-              start_date, end_date,
-              min_freq, max_freq,
-              battle_duration, front_selection),
-    pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
-        pn.pane.Markdown('## War Map'),
-        get_map_plot,
-              table),
-    markdown
-
-
+template.main.append(
+    pn.Row(
+        pn.Column(
+            warmap,
+            table
+        ),
+        pn.Column(
+            entity_display
+        )
+    )
 )
-row.servable()
-## TODO: USE GRID SPEC TO LAYOUT EVERYTHING AND MAKE IT RESPONSIVE
-# gspec = pn.GridSpec(sizing_mode='stretch_both', max_height=800)
-# gspec[0, :] = pn.pane.Markdown('#WEBAPP TITLE')
-# gspec[1:, 0] = setting_col
-# # gspec[2, :] = war_col
-# gspec[1, 1] = pn.pane.Markdown('## War Map')
-# gspec[2, 1] = get_map_plot
-# gspec[2, 1] = table
-# gspec.servable()
-
-# st.header('Concordancer')
-# print("SELECTED POINTS" , selected_points)
-# if selected_points:
-#     point_index = selected_points[0]['pointIndex']
-#     page_slider = st.slider(
-#         'Select entities mention',
-#         0, len(filtered_df), int(point_index)
-#     )
-# else:
-#     page_slider = st.slider(
-#         'Select entities mention',
-#         0, len(filtered_df), 50
-#     )
-# print("page_slider", page_slider)
-# window_slider = st.slider('Select context window', 1, 10, 5)
+template.servable()
+# row = pn.Row(
+#     pn.Column(pn.pane.Markdown('### Options'),
+#             lg_select, newspapers_select, year_select,
+#               start_date, end_date,
+#               min_freq, max_freq,
+#               battle_duration, front_selection),
+#     pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
+#         pn.pane.Markdown('## War Map'),
+#         warmap,
+#               table),
+#     entity_display
 #
-# df_page = filtered_df.loc[page_slider:page_slider + 50]
-#
-
-#
-# header_values = df_page.columns
-# cell_values = [df_page['newspaper'], df_page['date'], df_page['lang'], df_page['context_word_window'], df_page['left_context'], df_page['mention'],
-#                           df_page['right_context'], df_page['article_link'], df_page['wikidata_link']]
-#
-#
-# table = go.Figure(
-#     data=[
-#         go.Table(
-#             columnwidth=[80, 60, 40, 100, 100, 100, 100, 80, 80] ,
-#             header = dict(
-#                 values= df_page.columns,
-#                 # fill_color="paleturquoise",
-#                 align="left",
-#                 font=dict(color='black')
-#             ),
-#             cells = dict(
-#                 values = cell_values,
-#                 font=dict(color='black'),
-#                 align="left"
-#             )
-#         )
-#     ],
-#     # layout = dict(autosize=True)
-# )
-# table.update_layout(
-#     autosize=False,
-#     width=1100,
-#     height=1000,
-#     margin=dict(l=0, r=0),
 #
 # )
-#
-# st.plotly_chart(table)
+# row.servable()
+## TODO: USE GRID SPEC // BOOTSTRAP TO LAYOUT EVERYTHING AND MAKE IT RESPONSIVE
