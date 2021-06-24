@@ -298,6 +298,9 @@ map_df = groupby_data.first()
 bordersdf = pd.read_csv('data/borders/countryborders.csv')
 filtered_borders = json.load(open('data/borders/countryborders.geojson'))
 #
+df_page = map_df.reset_index()
+df_page = df_page[['left_context', 'mention', 'right_context']]
+#
 #
 # filtered_df = geo_df[
 #
@@ -365,10 +368,6 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
 entity_display = pn.pane.Markdown("",)
 
 
-
-
-
-#
 #     filtered_battles = filtered_battles[filtered_battles['Notes'].isin(front_selection)]
 
 @pn.depends(lg_select.param.value, newspapers_select.param.value, year_select.param.value)
@@ -433,8 +432,6 @@ def get_map_plot():
         )
     fig['data'][2]['name'] = 'Capitals'
 
-
-
     # Adding battle points
     fig.add_scattergeo(
             lat=filtered_battles['lat'],
@@ -454,8 +451,11 @@ def get_map_plot():
         )
     fig['data'][3]['name'] = 'Battles'
 
+
     fig.update_layout(
-        margin = dict(l=0),
+        # margin = dict(l=0),
+
+        # width= '100%',
         # width=1000,
         # height=700, # width and height of the plot
         # mapbox_style = map_style,
@@ -470,13 +470,13 @@ def get_map_plot():
         x=0.01)
     )
 
-    df_page = map_df.reset_index()
-    df_page = df_page[['left_context', 'mention', 'right_context' ]]
         # df_page[['newspaper', 'date', 'lang', 'context_word_window', 'left_context', 'mention', 'right_context',
         #                'article_link', 'wikidata_link']]
     # df_page = df_page[['newspaper', 'date']]
 
-    # html = autompg.to_html(classes=['example', 'panel-df'])
+    # df_page = map_df.reset_index()
+    # df_page = df_page[['left_context', 'mention', 'right_context']]
+
     html = df_page.to_html(classes=['example', 'panel-df'])
     table = pn.pane.HTML(html + script)
 
@@ -484,7 +484,7 @@ def get_map_plot():
     # pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
     ## adds callback when clicking on that plot
     @pn.depends(plot_panel.param.click_data, watch=True)
-    def string_hello_world(click_data):
+    def update_on_click(click_data):
         point = click_data['points'][0]
         pointindex = point['pointIndex']
         entity_data = map_df.iloc[pointindex]
@@ -497,12 +497,17 @@ def get_map_plot():
         <b>NewsEye link</b>: {entity_data['article_link']}<br>
         <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
         <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
-        # dict_data = json.dumps(point)
-        # print("CLICK DATA", dict_data)
+
         entity_display.object = md_template
-        new_html = df_page.iloc[point['pointIndex'] :].to_html(classes=['example', 'panel-df']) + script
+        # html = df_page.to_html(classes=['example', 'panel-df']) + script
+
+        new_html = df_page.iloc[point['pointIndex']:]
+        # new_html = df_page[df_page['mention'] == entity_data['mention']] ## TODO: BUG HERE TO DISPLAY THE TABLE
+        # print(type(new_html))
+        new_html.to_html(classes=['example', 'panel-df']) + script
+        print(new_html)
         table.object = new_html
-        return click_data
+        # return click_data
 
     # @pn.depends(plot_panel.param.click_data, watch=True)
     # def print_hello_world(click_data):
@@ -533,25 +538,52 @@ def get_map_plot():
 # bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
 warmap, table = get_map_plot()
 
-template = pn.template.MaterialTemplate(title='WEBAPP')
-for widget in [lg_select, newspapers_select, year_select,
-              start_date, end_date,
-              min_freq, max_freq,
-              battle_duration, front_selection]:
-    template.sidebar.append(widget)
+gridspec = pn.GridSpec(sizing_mode='stretch_both')
+gridspec[:, :] = warmap
+gridspec.servable()
 
-template.main.append(
-    pn.Row(
-        pn.Column(
-            warmap,
-            table
-        ),
-        pn.Column(
-            entity_display
-        )
-    )
-)
-template.servable()
+# ## TODO: MAKE SURE DATE ARE IN ORDER FOR THE SLIDER TO GO PROPERLY
+# player = pn.widgets.DiscretePlayer(name='ANIMATION SLIDER', options=list(map_df.iloc[:15]['date'].values))
+# # print(int(map_df['index'].min()), int(map_df['index'].max()))
+# print(list(map_df.iloc[:15]['date'].values))
+#
+# @pn.depends(frame = player.param.value)
+# def timeslider(frame):
+#     print("Player", frame)
+#     warmap.synchronize()
+#
+# def callback_clear_display(target, event):
+#     target.object = ''
+#     html = df_page.to_html(classes=['example', 'panel-df']) + script
+#     table.object = html
+#
+#
+# clear_button = pn.widgets.Button(name='Clear selection', button_type='primary')
+# clear_button.link(entity_display, callbacks={'value': callback_clear_display})
+#
+#
+# template = pn.template.MaterialTemplate(title='WEBAPP')
+# for widget in [lg_select, newspapers_select, year_select,
+#               start_date, end_date,
+#               min_freq, max_freq,
+#               battle_duration, front_selection]:
+#     template.sidebar.append(widget)
+#
+# template.main.append(
+#     pn.Row(
+#         pn.Column(
+#             warmap,
+#             player,
+#             table
+#         ),
+#         pn.Column(
+#             clear_button,
+#             entity_display
+#         )
+#     )
+# )
+# template.servable()
+
 # row = pn.Row(
 #     pn.Column(pn.pane.Markdown('### Options'),
 #             lg_select, newspapers_select, year_select,
