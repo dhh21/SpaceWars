@@ -538,9 +538,55 @@ def get_map_plot():
 # bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
 warmap, table = get_map_plot()
 
-gridspec = pn.GridSpec(sizing_mode='stretch_both')
-gridspec[:, :] = warmap
-gridspec.servable()
+template = """
+{% extends base %}
+
+<!-- goes in body -->
+{% block postamble %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+{% endblock %}
+
+<!-- goes in body -->
+{% block contents %}
+{{ app_title }}
+<p>This is a Panel app with a custom template allowing us to compose multiple Panel objects into a single HTML document.</p>
+<br>
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12">
+      {{ embed(roots.A) }}
+    </div>
+  </div>
+</div>
+{% endblock %}
+"""
+
+# nb_template = """
+# {% extends base %}
+#
+# {% block contents %}
+# {{ app_title }}
+# <p>This is a Panel app with a custom template allowing us to compose multiple Panel objects into a single HTML document.</p>
+# <br>
+# <div style="display:table; width: 100%">
+#   <div style="display:table-cell; margin: auto">
+#     {{ embed(roots.A) }}
+#   </div>
+#   <div style="display:table-cell; margin: auto">
+#     {{ embed(roots.B) }}
+#   </div>
+# </div>
+# {% endblock %}
+# """
+
+# tmpl = pn.Template(template, nb_template=nb_template)
+tmpl = pn.Template(template)
+tmpl.add_variable('app_title', '<h1>Custom Template App</h1>')
+
+tmpl.add_panel('A', warmap)
+# tmpl.add_panel('B', table)
+
+tmpl.servable()
 
 # ## TODO: MAKE SURE DATE ARE IN ORDER FOR THE SLIDER TO GO PROPERLY
 # player = pn.widgets.DiscretePlayer(name='ANIMATION SLIDER', options=list(map_df.iloc[:15]['date'].values))
