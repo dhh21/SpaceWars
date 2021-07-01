@@ -16,7 +16,8 @@ from datetime import datetime
 
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
-       'https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css'
+       'https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css',
+       'static/css/style.css'
 ]
 js = {
     '$': 'https://code.jquery.com/jquery-3.5.1.js',
@@ -27,6 +28,7 @@ js = {
     'pdfmake': 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js',
     'vfsfonts': 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js',
     'html5buttons': 'https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js',
+    # 'static/scripts/scripts.js'
 }
 
 epsg = 4326
@@ -333,7 +335,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
 def get_map_plot():
 
 
-    map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+    # map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     bordersdf = get_country_borders(start_date, end_date)
     bordersdf['zero'] = 0
@@ -349,23 +351,23 @@ def get_map_plot():
         showscale=False
     )
     #
-    fig.add_scattergeo(
-            lat=map_df['lat'],
-            lon=map_df['lon'],
-            mode='markers',
-            hovertext = map_df['txthover'],
-            marker=go.scattergeo.Marker(
-                size=map_df['freq'],
-                sizemode='area',
-                sizeref=map_df['freq'].max() / 15 ** 2
-
-            ),
-            hoverinfo='text'
-        )
-
-    fig['data'][1]['showlegend']=True
-    fig['data'][1]['name']='Named Entity frequencies'
-    fig['data'][1]['legendgroup']= 'Frequencies'
+    # fig.add_scattergeo(
+    #         lat=map_df['lat'],
+    #         lon=map_df['lon'],
+    #         mode='markers',
+    #         hovertext = map_df['txthover'],
+    #         marker=go.scattergeo.Marker(
+    #             size=map_df['freq'],
+    #             sizemode='area',
+    #             sizeref=map_df['freq'].max() / 15 ** 2
+    #
+    #         ),
+    #         hoverinfo='text'
+    #     )
+    #
+    # fig['data'][1]['showlegend']=True
+    # fig['data'][1]['name']='Named Entity frequencies'
+    # fig['data'][1]['legendgroup']= 'Frequencies'
 
     # ## Adds capital on the map
     fig.add_scattergeo(
@@ -411,7 +413,6 @@ def get_map_plot():
     fig.update_layout(
         autosize=True,
         hovermode='closest',
-        # output_type='div',
         legend=dict(
         bgcolor='ivory',
         bordercolor='lightgray',
@@ -526,31 +527,43 @@ front_selection.param.watch(update_battle_plot, 'value')
 start_date.param.watch(update_country_borders, 'value')
 end_date.param.watch(update_country_borders, 'value')
 
-setting_col = pn.Column(pn.pane.Markdown('### Options'),
+# setting_col = pn.WidgetBox('# Options', pn.pane.Markdown('### Options'),
+#             lg_select, newspapers_select,
+#                         # calendar,
+#               start_date, end_date,
+#               # min_freq, max_freq,
+#             min_duration, max_duration,
+#             front_selection)
+
+setting_col = pn.Card('# Options', pn.pane.Markdown('### Options'),
             lg_select, newspapers_select,
                         # calendar,
               start_date, end_date,
-                        # TODO: CORRECT BUG
               # min_freq, max_freq,
             min_duration, max_duration,
             front_selection)
 
-# war_col = pn.Column(pn.pane.Markdown('#WEBAPP TITLE'),
-#         pn.pane.Markdown('## War Map'),
-#         pn.pane.Plotly(warmap, config={"responsive": True}),
-#         table
-#         # warmap,
-#         # table
-#                     )
 map_panel = pn.pane.Plotly(warmap, config={"responsive": True})
-tabs = pn.Tabs(('Warmap', map_panel),
-               ('Concordancer', table)
-               )
+# tabs = pn.Tabs(('Warmap', map_panel),
+#                ('Concordancer', table)
+#                )
+# tabs = pn.Tabs(('Warmap', pn.Column(
+#     setting_col, map_panel
+# )
+#
+#                 ),
+#                ('Concordancer', table)
+#                )
 
-bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
-bootstrap.sidebar.append(setting_col)
+tabs = pn.Tabs(
+    ('Warmap', map_panel),
+    ('Concordancer', table)
+)
+
+# bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
+# bootstrap.sidebar.append(setting_col)
 # bootstrap.main.append(war_col)
-bootstrap.main.append(tabs)
+# bootstrap.main.append(tabs)
 
 # bootstrap.servable()
 
@@ -560,29 +573,51 @@ template = """
 {% extends base %}
 <!-- goes in body -->
 {% block postamble %}
-<!-- CSS only -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
 {% endblock %}
 
 <!-- goes in body -->
 {% block contents %}
-{{ app_title }}
-{{ embed(roots.lg) }}
-<p>This is a Panel app with a custom template allowing us to compose multiple Panel objects into a single HTML document.</p>
-<br>
-{{ embed(roots.A) }}
 
+
+
+
+{{ app_title }}
+
+<div id="mySidebar" class="sidebar">
+  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+  <h1>Options</h1>
+    {{ embed(roots.setting_col)}}
+</div>
+
+  <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button> 
+{{ embed(roots.tabs)}}
+
+
+
+<script>
+/* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
+function openNav() {
+  document.getElementById("mySidebar").style.width = "25em";
+  document.getElementById("main").style.marginLeft = "25em";
+}
+
+/* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
+function closeNav() {
+  document.getElementById("mySidebar").style.width = "0";
+  document.getElementById("main").style.marginLeft = "0";
+}
+
+</script>
 {% endblock %}
 """
 
-div = plotly.io.to_html(warmap, full_html=False, include_plotlyjs=True)
+# div = plotly.io.to_html(warmap, full_html=False, include_plotlyjs=True)
+# div = div.replace('<div>', '<div id="warmap" class="tabcontent">')
 tmpl = pn.Template(template)
 tmpl.add_variable('app_title', '<h1>Custom Template App</h1>')
-tmpl.add_panel('lg', lg_select)
-tmpl.add_panel('A', tabs)
-
-
+tmpl.add_panel('tabs', tabs)
+tmpl.add_panel('setting_col', setting_col)
+# tmpl.add_variable('warmap', div)
 tmpl.servable()
 
 # with open('test.html', 'w') as f:
