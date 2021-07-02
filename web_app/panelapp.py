@@ -1,15 +1,8 @@
-import param
 import panel as pn
-import plotly.io
-from bokeh.sampledata.autompg import autompg
 
 import plotly.graph_objs as go
 import json
 import pandas as pd
-import geopandas as gpd
-import plotly.express as px
-# from shapely import wkt
-from glob import glob
 from sqlalchemy import create_engine
 import tempfile
 from datetime import datetime
@@ -59,6 +52,7 @@ def get_entities_hover_text(entities):
                            + "Frequency: " + entities['freq'].map(str)  +'<br>'\
                            + "Lat:" + entities['lat'].map(str) + '<br>'\
                            + "Lon:" + entities['lon'].map(str)
+
     return entities
 
 dic_lg = {
@@ -84,12 +78,22 @@ dic_news = {
 
 script = """
 <script>
+function renderTable(){
+  $('.example').DataTable( {
+    dom: 'Bfrtip',
+    buttons: [
+        'copyHtml5',
+        'excelHtml5',
+        'csvHtml5',
+        'pdfHtml5'
+    ]
+} );
+}
+
 if (document.readyState === "complete") {
-  $('.example').DataTable();
+  renderTable()
 } else {
-  $(document).ready(function () {
-    $('.example').DataTable();
-  })
+  $(document).ready(renderTable);
 }
 </script>
 """
@@ -116,7 +120,7 @@ def convert(row, col, text):
     # print(text)
     data = row[col]
     if isinstance(data, str):
-        return '<a href="{}">{}</a>'.format(data,  text)
+        return '<a href="{}" target="_blank">{}</a>'.format(data,  text)
     else:
         return 'No link available'
 
@@ -129,7 +133,6 @@ engine = create_engine('postgresql://postgres:spacewars@localhost:5432/spacewars
 ## TODO : NOT SO SURE ABOUT THAT ANYMORE
 
 ## TODO : FILTER BODERS ACCORDING TO DATE AND CORRECT ISSUE WITH CAPITALS
-# bordersdf = pd.read_csv('data/borders/countryborders.csv')
 borderjson = json.load(open('data/borders/countryborders.geojson'))
 # #
 
@@ -193,22 +196,6 @@ end_date = pn.widgets.DatePicker(name='End Date',
                                  # enabled_dates = list(map_df['date'].values),
                                    )
 
-calendar = pn.widgets.DatePicker(name='Calendar',
-                                 value=widget_values['dates'][0],
-                                 start_date =widget_values['dates'][0],
-                                 end_date=widget_values['dates'][-1],
-
-                                 )
-print(widget_values['dates'][:10])
-## TODO: FREQUENCIES ON THE FLY, UPDATE WIDGET EACH TIME
-# min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
-#                                 value = '1'
-#                                 )
-# ## TODO: NEED THE DATA BEFORE IN ORDER TO GET THE MAXIMUM POSSIBLE FREQUENCY
-# max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
-#                                 value = map_df['freq'].max().astype('str')
-#                                 )
-
 min_duration = pn.widgets.TextInput(name='Mininum battle duration (days):', placeholder = 'Enter a value here ...',
                                 value = str(widget_values['durations'][0])
                                 )
@@ -264,7 +251,7 @@ def get_battle_df(start_date, end_date, min_duration, max_duration, front_select
     AND "Notes" IN %s
     '''
     df_battles = read_sql_tmpfile(q, engine, args)
-    df_battles['txthover'] = get_battle_hover_text(df_battles)
+    df_battles = get_battle_hover_text(df_battles)
     return df_battles
 
 def get_country_borders(start_date, end_date):
@@ -303,7 +290,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     end_date = str(end_date.value)
 
     args = (lg, newspaper, start_date, end_date)
-    q = '''SELECT * from entities
+    q = '''SELECT * from entities_2
     WHERE "lang" IN %s
     AND "newspaper" IN %s
     AND "date" BETWEEN %s AND %s
@@ -314,12 +301,11 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     map_df['anim_date'] = map_df['date'].dt.strftime('%B-%Y')
     map_df['year'] = pd.DatetimeIndex(map_df['date']).year
     map_df['year'] = map_df['year'].astype(str)
-    map_df['txthover'] = get_entities_hover_text(map_df)
     map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
-
     context_window = int(context_window.value)
     map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
     map_df['wikidata_link'] = map_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
+
     # geo_df['date'] = pd.DatetimeIndex(geo_df['date']).strftime("%Y-%m-%d")
     map_df['context_word_window'] = context_window
     map_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, context_window))
@@ -330,12 +316,14 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     # in the data.
     groupby_data = map_df.groupby('geometry')
     map_df = groupby_data.first()
+    map_df = get_entities_hover_text(map_df)
+
     return map_df
 
 def get_map_plot():
 
 
-    # map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+    map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     bordersdf = get_country_borders(start_date, end_date)
     bordersdf['zero'] = 0
@@ -346,25 +334,26 @@ def get_map_plot():
         featureidkey='properties.cntry_name',
         locationmode='geojson-id',
         locations=bordersdf['cntry_name'],
+        hovertext=bordersdf['cntry_name'],
+        hoverinfo='text',
         z=bordersdf['zero'],
-        # z = bordersdf['area'],
         showscale=False
     )
     #
-    # fig.add_scattergeo(
-    #         lat=map_df['lat'],
-    #         lon=map_df['lon'],
-    #         mode='markers',
-    #         hovertext = map_df['txthover'],
-    #         marker=go.scattergeo.Marker(
-    #             size=map_df['freq'],
-    #             sizemode='area',
-    #             sizeref=map_df['freq'].max() / 15 ** 2
-    #
-    #         ),
-    #         hoverinfo='text'
-    #     )
-    #
+    fig.add_scattergeo(
+            lat=map_df['lat'],
+            lon=map_df['lon'],
+            mode='markers',
+            hovertext = map_df['txthover'],
+            marker=go.scattergeo.Marker(
+                size=map_df['freq'],
+                sizemode='area',
+                sizeref=map_df['freq'].max() / 15 ** 2
+
+            ),
+            hoverinfo='text'
+        )
+
     # fig['data'][1]['showlegend']=True
     # fig['data'][1]['name']='Named Entity frequencies'
     # fig['data'][1]['legendgroup']= 'Frequencies'
@@ -421,25 +410,34 @@ def get_map_plot():
         yanchor="top",
         y=0.99,
         xanchor="left",
-        x=0.01)
+        x=0.01),
+    dragmode='drawopenpath',
+    newshape_line_color='cyan',
+
+    # title_text='Draw a path to separate versicolor and virginica',
+
+
     )
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
 
     # TODO: GET ALL ENTITES NOT JUST THE FIRST ONES
-    df_page = pd.DataFrame.from_dict(
-        {"window_left_context": ['aaa', 'iii'],
-         "mention": ['aaaa', 'ooo'],
-         "window_right_context": ['aaaa', 'ooo']
-         }
-    )
-    # df_page = map_df.reset_index()
+    # df_page = pd.DataFrame.from_dict(
+    #     {"left_context":['aaaaaaa', 'iiiiiiiii'],
+    #         "window_left_context": ['aaa', 'iii'],
+    #      "mention": ['aaaa', 'ooo'],
+    #      "right_context": ['aaaaaaaaaaaa', 'ooooooooo'],
+    #      "window_right_context": ['aaaa', 'ooo']
+    #      }
+    # )
+    df_page = map_df.reset_index()
     df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    #
+    # html = df_page.to_html(classes=['example', 'panel-df'])
+    # table = pn.pane.HTML(html + script)
 
-    html = df_page.to_html(classes=['example', 'panel-df'])
-    table = pn.pane.HTML(html + script)
-
-    return fig, table
+    # return fig, table
+    return fig, map_df, df_page
 
 def update_entities_plot(event):
     new_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
@@ -454,6 +452,7 @@ def update_entities_plot(event):
     df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
 
     html = df_page.to_html(classes=['example', 'panel-df'])
+    html = html.replace('<table', '<table style="width:80%"')
 
     table.object = html + script
 
@@ -467,9 +466,20 @@ def update_battle_plot(event):
     battle_map['marker']['size'] = df_battles['Duration']
 
 def update_context_window(event):
-    """"""
-    #todo:
-    pass
+    """
+
+    """
+    new_window = int(context_window.value)
+
+    df_page['context_word_window'] = new_window
+    df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, new_window))
+    df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, new_window, left=False))
+
+    filtered_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    html = filtered_page.to_html(classes=['example', 'panel-df'])
+    html = html.replace('<table', '<table style="width:80%"')
+    html = html + script
+    table.object = html
 
 # TODO: IF CAN BORDERS BY BACKGROUND IMAGE
 def update_country_borders(event):
@@ -478,64 +488,74 @@ def update_country_borders(event):
     """
     bordersdf = get_country_borders(start_date, end_date)
     bordersmap = warmap['data'][0]
-    print(bordersmap)
+    # bordersmap['location'] = bordersdf['location']
+    # print("BORDERS:", bordersmap.keys())
 
 # plot_panel = pn.pane.Plotly(fig, config={"responsive": True})
 # pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
 ## adds callback when clicking on that plot
-# @pn.depends(plot_panel.param.click_data, watch=True)
-# def update_on_click(click_data):
-#     point = click_data['points'][0]
-#     pointindex = point['pointIndex']
-#     entity_data = map_df.iloc[pointindex]
-#     print(entity_data)
-#
-#     md_template = f"""<b>Entity</b>:{entity_data['mention']}<br>
-#     <b>Newspaper</b>: {entity_data['newspaper']}<br>
-#     <b>Language</b>: {entity_data['lang']}<br>
-#     <b>Date</b>: {entity_data['date'].strftime("%d %B %Y")}<br>
-#     <b>NewsEye link</b>: {entity_data['article_link']}<br>
-#     <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
-#     <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
-#
-#     entity_display.object = md_template
-#     # html = df_page.to_html(classes=['example', 'panel-df']) + script
-#
-#     new_html = df_page.iloc[point['pointIndex']:]
-#     # new_html = df_page[df_page['mention'] == entity_data['mention']] ## TODO: BUG HERE TO DISPLAY THE TABLE
-#     new_html.to_html(classes=['example', 'panel-df']) + script
-#     print(new_html)
-#     table.object = new_html
 
-warmap, table = get_map_plot()
-# plot_panel
+
+# warmap, table = get_map_plot()
+warmap, map_df, df_page = get_map_plot()
+
+## TODO: FREQUENCIES ON THE FLY, UPDATE WIDGET EACH TIME
+min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
+                                value = '1'
+                                )
+# ## TODO: NEED THE DATA BEFORE IN ORDER TO GET THE MAXIMUM POSSIBLE FREQUENCY
+max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
+                                value = map_df['freq'].max().astype('str')
+                                )
+
+def update_frequency_plot(event):
+    new_df = map_df[
+        map_df['freq'] <= int( min_freq.value)
+        & map_df['freq'] >= int(max_freq.value)
+    ]
+    entities = warmap['data'][1]
+    entities['lat'] = new_df['lat']
+    entities['lon'] = new_df['lon']
+    entities['hovertext'] = new_df['txthover']
+    entities['marker']['size'] = new_df['freq']
+
+    df_page = new_df.reset_index()
+    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+
+    html = df_page.to_html(classes=['example', 'panel-df'])
+    html = html.replace('<table', '<table style="width:80%"')
+
+    table.object = html + script
+
+
+
 
 
 # adding callbacks to update entities points and table
 lg_select.param.watch(update_entities_plot, 'value')
 newspapers_select.param.watch(update_entities_plot, 'value')
-start_date.param.watch(update_entities_plot, 'value')
-end_date.param.watch(update_entities_plot, 'value')
+# start_date.param.watch(update_entities_plot, 'value')
+# end_date.param.watch(update_entities_plot, 'value')
 
 # adding callbacks to update battle points
 min_duration.param.watch(update_battle_plot, 'value')
 max_duration.param.watch(update_battle_plot, 'value')
-start_date.param.watch(update_battle_plot, 'value')
-end_date.param.watch(update_battle_plot, 'value')
+# start_date.param.watch(update_battle_plot, 'value')
+# end_date.param.watch(update_battle_plot, 'value')
 front_selection.param.watch(update_battle_plot, 'value')
 
+# adding callbacks to update country borders
 start_date.param.watch(update_country_borders, 'value')
 end_date.param.watch(update_country_borders, 'value')
 
-# setting_col = pn.WidgetBox('# Options', pn.pane.Markdown('### Options'),
-#             lg_select, newspapers_select,
-#                         # calendar,
-#               start_date, end_date,
-#               # min_freq, max_freq,
-#             min_duration, max_duration,
-#             front_selection)
+# adding callbacks to update context window
+context_window.param.watch(update_context_window, 'value')
 
-setting_col = pn.Card('# Options', pn.pane.Markdown('### Options'),
+# adding callbacks to update frequencies on plot
+min_freq.param.watch(update_entities_plot, 'value')
+max_freq.param.watch(update_entities_plot, 'value')
+
+setting_col = pn.WidgetBox('### Options',
             lg_select, newspapers_select,
                         # calendar,
               start_date, end_date,
@@ -543,22 +563,69 @@ setting_col = pn.Card('# Options', pn.pane.Markdown('### Options'),
             min_duration, max_duration,
             front_selection)
 
-map_panel = pn.pane.Plotly(warmap, config={"responsive": True})
-# tabs = pn.Tabs(('Warmap', map_panel),
-#                ('Concordancer', table)
-#                )
-# tabs = pn.Tabs(('Warmap', pn.Column(
-#     setting_col, map_panel
-# )
-#
-#                 ),
-#                ('Concordancer', table)
-#                )
+setting_row = pn.Row('### Options',
+            pn.Column(lg_select, newspapers_select),
+            pn.Column(start_date, end_date, min_freq, max_freq),
+            pn.Column(front_selection, min_duration, max_duration),
+            context_window,
+            entity_display
+            )
 
+plot_config = {
+    "responsive": True,
+    "displaylogo": False,
+    "displayModeBar": True,
+    'toImageButtonOptions': {'height': None, 'width': None, },
+    ## TODO: ADD DRAWING TOOLS BUT DOESNT SEEM TO WORK ON MAPS
+    # 'modeBarButtonsToAdd':['drawline',
+    #                         'drawopenpath',
+    #                         'drawclosedpath',
+    #                         'drawcircle',
+    #                         'drawrect',
+    #                         'eraseshape'
+    #                                    ]
+}
+
+map_panel = pn.pane.Plotly(warmap, config=plot_config)
+
+filtered_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+
+html = filtered_page.to_html(classes=['example', 'panel-df'])
+# TODO: SOLUTION FOR NOW, MAYBE USE BREAKPOINTS IN CSS TO MAKE IT RESPONSIVE
+html = html.replace('<table', '<table style="width:80%"')
+# print("HTML ", type(html))
+
+table = pn.pane.HTML(html + script, sizing_mode='stretch_width')
 tabs = pn.Tabs(
     ('Warmap', map_panel),
-    ('Concordancer', table)
+    ('Concordancer', table),
+    tabs_location='left'
 )
+
+@pn.depends(map_panel.param.click_data, watch=True)
+def update_on_click(click_data):
+    point = click_data['points'][0]
+    print(point)
+    pointindex = point['pointIndex']
+    entity_data = map_df.iloc[pointindex]
+
+    md_template = f"""<b>Entity</b>:{entity_data['mention']}<br>
+    <b>Newspaper</b>: {entity_data['newspaper']}<br>
+    <b>Language</b>: {entity_data['lang']}<br>
+    <b>Date</b>: {entity_data['date'].strftime("%d %B %Y")}<br>
+    <b>NewsEye link</b>: {entity_data['article_link']}<br>
+    <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
+    <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
+
+    entity_display.object = md_template
+    # html = df_page.to_html(classes=['example', 'panel-df']) + script
+
+    # new_html = df_page.iloc[point['pointIndex']:]
+    new_html = df_page[df_page['mention'] == entity_data['mention']]
+    new_html = new_html.to_html(classes=['example', 'panel-df'])
+    new_html = new_html.replace('<table', '<table style="width:80%"')
+
+    table.object = new_html + script
 
 # bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
 # bootstrap.sidebar.append(setting_col)
@@ -567,31 +634,23 @@ tabs = pn.Tabs(
 
 # bootstrap.servable()
 
-# <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 template = """
 
 {% extends base %}
-<!-- goes in body -->
-{% block postamble %}
-{% endblock %}
 
-<!-- goes in body -->
 {% block contents %}
-
-
-
 
 {{ app_title }}
 
 <div id="mySidebar" class="sidebar">
-  <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-  <h1>Options</h1>
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     {{ embed(roots.setting_col)}}
 </div>
 
-  <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button> 
-{{ embed(roots.tabs)}}
+<button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
+{{ embed(roots.setting_row)}}
 
+{{ embed(roots.tabs)}}
 
 
 <script>
@@ -614,12 +673,24 @@ function closeNav() {
 # div = plotly.io.to_html(warmap, full_html=False, include_plotlyjs=True)
 # div = div.replace('<div>', '<div id="warmap" class="tabcontent">')
 tmpl = pn.Template(template)
-tmpl.add_variable('app_title', '<h1>Custom Template App</h1>')
+tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
-# tmpl.add_variable('warmap', div)
-tmpl.servable()
+tmpl.add_panel('setting_row', setting_row)
 
+# pn.Row(
+#     start_date,
+#     end_date,
+#     map_panel
+# ).servable()
+
+# pn.Tabs(
+#     ('test', table),
+#     tabs_location='left'
+#
+# ).servable()
+tmpl.servable()
+# tabs.servable()
 # with open('test.html', 'w') as f:
 #     f.write(div)
 # print(plotly.io.to_html(warmap, full_html=False, include_plotlyjs=False))
