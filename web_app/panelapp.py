@@ -8,6 +8,8 @@ from sqlalchemy import create_engine
 import tempfile
 from datetime import datetime
 from sqlalchemy.engine.url import URL
+import re
+
 
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
@@ -404,7 +406,7 @@ def get_map_plot():
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
-    print(grp_map_df)
+    # print(grp_map_df)
     # grp_map_df.rename(columns={'index':'mention'})
 
     bordersdf['zero'] = 0
@@ -497,8 +499,6 @@ def get_map_plot():
     newshape_line_color='cyan',
 
     # title_text='Draw a path to separate versicolor and virginica',
-
-
     )
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
@@ -514,10 +514,10 @@ def get_map_plot():
 
     # TODO : ONLY KEEPS 1 LINE, NOT EVERY ENTITIES
     # TODO: MAYBE WILL REQUIRE TO CHANGE THE DATATABLE
-    df_page = grp_map_df.reset_index()
-    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    # df_page = grp_map_df.reset_index()
+    # df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
 
-    # df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
+    df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
 
     return fig, map_df, df_page
 
@@ -535,13 +535,14 @@ def update_entities_plot(event):
     entities['hovertext'] = grp_map_df['txthover']
     entities['marker']['size'] = grp_map_df['freq']
 
-    # df_page = new_df.reset_index()
-    df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+    new_df_page = new_df.reset_index()
+    new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
+    df_page['window_left_context'] = new_df_page['window_left_context']
+    df_page['mention'] = new_df_page['mention']
+    df_page['window_right_context'] = new_df_page['window_right_context']
+    df_page.dropna(inplace=True)
 
-    html = df_page.to_html(classes=['example', 'panel-df'])
-    html = html.replace('<table', '<table style="width:80%"')
 
-    table.object = html + script
 
 def update_battle_plot(event):
 
@@ -552,21 +553,6 @@ def update_battle_plot(event):
     battle_map['txthover'] = df_battles['txthover']
     battle_map['marker']['size'] = df_battles['Duration']
 
-def update_context_window(event):
-    """
-
-    """
-    new_window = int(context_window.value)
-
-    df_page['context_word_window'] = new_window
-    df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, new_window))
-    df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, new_window, left=False))
-
-    filtered_page = df_page[['window_left_context', 'mention', 'window_right_context']]
-    html = filtered_page.to_html(classes=['example', 'panel-df'])
-    html = html.replace('<table', '<table style="width:80%"')
-    html = html + script
-    table.object = html
 
 # TODO: IF CAN BORDERS BY BACKGROUND IMAGE
 # TODO: COUNTRY FREQUENCIES WHILE UPDATING
@@ -607,13 +593,20 @@ def update_frequency_plot(event):
     entities['hovertext'] = new_df['txthover']
     entities['marker']['size'] = new_df['freq']
 
-    df_page = new_df.reset_index()
-    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    new_df_page = new_df.reset_index()
+    new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
+    df_page['window_left_context'] = new_df_page['window_left_context']
+    df_page['mention'] = new_df_page['mention']
+    df_page['window_right_context'] = new_df_page['window_right_context']
+    df_page.dropna(inplace=True)
 
-    html = df_page.to_html(classes=['example', 'panel-df'])
-    html = html.replace('<table', '<table style="width:80%"')
-
-    table.object = html + script
+    # new_df_page = new_df.reset_index()
+    # new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
+    # df_page.update(new_df_page)
+    # # html = df_page.to_html(classes=['example', 'panel-df'])
+    # # html = html.replace('<table', '<table style="width:80%"')
+    # #
+    # # table.object = html + script
 
 
 # adding callbacks to update entities points and table
@@ -634,11 +627,17 @@ start_date.param.watch(update_country_borders, 'value')
 end_date.param.watch(update_country_borders, 'value')
 
 # adding callbacks to update context window
-context_window.param.watch(update_context_window, 'value')
+# context_window.param.watch(update_context_window, 'value')
 
 # adding callbacks to update frequencies on plot
 min_freq.param.watch(update_entities_plot, 'value')
 max_freq.param.watch(update_entities_plot, 'value')
+
+
+search_bar = pn.widgets.TextInput(name='Search:')
+clear_button = pn.widgets.Button(name='Clear concordancer', button_type='primary')
+case_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
+
 
 setting_col = pn.WidgetBox('### Options',
             lg_select, newspapers_select,
@@ -646,14 +645,15 @@ setting_col = pn.WidgetBox('### Options',
               start_date, end_date,
               # min_freq, max_freq,
             min_duration, max_duration,
-            front_selection)
+            front_selection,
+           search_bar)
 
 setting_row = pn.Row('### Options',
             pn.Column(lg_select, newspapers_select),
             pn.Column(start_date, end_date, min_freq, max_freq),
             pn.Column(front_selection, min_duration, max_duration),
-            context_window,
-            entity_display
+            pn.Column(context_window, search_bar, clear_button, case_checkbox),
+            entity_display,
             )
 
 plot_config = {
@@ -678,32 +678,83 @@ filtered_page = df_page[['window_left_context', 'mention', 'window_right_context
 html = filtered_page.to_html(classes=['example', 'panel-df'])
 # TODO: SOLUTION FOR NOW, MAYBE USE BREAKPOINTS IN CSS TO MAKE IT RESPONSIVE
 html = html.replace('<table', '<table style="width:80%"')
-# print("HTML ", type(html))
-#
-# html = """<table id="example" class="display" style="width:100%">
-#         <thead>
-#             <tr>
-#                 <th>Name</th>
-#                 <th>Position</th>
-#                 <th>Office</th>
-#                 <th>Extn.</th>
-#                 <th>Start date</th>
-#                 <th>Salary</th>
-#             </tr>
-#         </thead>
-#         <tfoot>
-#             <tr>
-#                 <th>Name</th>
-#                 <th>Position</th>
-#                 <th>Office</th>
-#                 <th>Extn.</th>
-#                 <th>Start date</th>
-#                 <th>Salary</th>
-#             </tr>
-#         </tfoot>
-#     </table>"""
 
 table = pn.pane.HTML(html + script, sizing_mode='stretch_width')
+
+def update_context_window(df, pattern):
+    """
+
+    """
+    print("context :", pattern)
+    if not pattern:
+        return df
+    new_window = int(pattern)
+
+    new_df = map_df[['left_context', 'mention', 'right_context']]
+
+    new_df['context_word_window'] = new_window
+    new_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, new_window))
+    new_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, new_window, left=False))
+    filtered_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+
+    return filtered_page
+
+    # html = filtered_page.to_html(classes=['example', 'panel-df'])
+    # html = html.replace('<table', '<table style="width:80%"')
+    # html = html + script
+    # table.object = html
+
+def search_entity(df, pattern, column):
+    """
+    Search exact entity in column
+    """
+    # print(pattern)
+
+    # else:
+
+    if not pattern:
+        print('not pattern')
+        return df
+
+    if case_checkbox.value:
+        pattern = re.compile(f"{pattern}", re.IGNORECASE)
+    print(df[df[column].str.contains(pattern)])
+    return df[df[column].str.contains(pattern)]
+
+def clear_concordancer(df, pattern):
+    """
+    Clear selection in concordancer and returns full data
+    """
+    # print('clear')
+    # print(pattern)
+    if pattern:
+        print('clear')
+        search_bar.value = ''
+        return df_page
+    return df
+
+def update_table(df, pattern):
+    print('update :', pattern)
+    if pattern:
+        # print(df_page)
+        return df_page
+    return df
+
+table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
+                             pagination='remote', page_size=10)
+
+
+table.add_filter(pn.bind(update_table, pattern=lg_select))
+table.add_filter(pn.bind(update_table, pattern=newspapers_select))
+table.add_filter(pn.bind(update_table, pattern=start_date))
+table.add_filter(pn.bind(update_table, pattern=end_date))
+table.add_filter(pn.bind(update_table, pattern=min_freq))
+table.add_filter(pn.bind(update_table, pattern=max_freq))
+
+table.add_filter(pn.bind(update_context_window, pattern=context_window))
+table.add_filter(pn.bind(search_entity, pattern=search_bar, column='mention'))
+table.add_filter(pn.bind(clear_concordancer, pattern=clear_button))
+
 tabs = pn.Tabs(
     ('Warmap', map_panel),
     ('Concordancer', table),
