@@ -6,6 +6,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 import tempfile
 from datetime import datetime
+from sqlalchemy.engine.url import URL
 
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
@@ -41,6 +42,19 @@ def get_battle_hover_text(battles):
                            + "Front:" + battles['Notes'].map(str) + '<br>'\
                            + "Duration:" + battles['Duration'].map(str)
     return battles
+
+def get_borders_hover_text(borders):
+    """
+    Prepare column of text for hover
+    """
+
+    borders['txthover'] =   borders['cntry_name'].map(str) + '<br>' \
+                           + "English frequency: " + borders['en_freq'].map(str) + '<br>' \
+                           + "French frequency: " + borders['fr_freq'].map(str) + '<br>' \
+                            + "German frequency: " + borders['de_freq'].map(str) + '<br>' \
+                            + "Finnish frequency: " + borders['fi_freq'].map(str) + '<br>' \
+                            + "Total frequency: " + borders['total_freq'].map(str) + '<br>'
+    return borders
 
 def get_entities_hover_text(entities):
     """
@@ -124,9 +138,12 @@ def convert(row, col, text):
     else:
         return 'No link available'
 
+with open('config.json') as f:
+    db_config = json.load(f)
+    db_config = URL(**db_config)
 
-engine = create_engine('postgresql://postgres:spacewars@localhost:5432/spacewars')
-
+# engine = create_engine('postgresql://postgres:spacewars@localhost:5432/spacewars')
+engine = create_engine(db_config, echo=True)
 
 # ## need to cast date column to str in order to use it with the animation frame
 # map_df['anim_date'] = map_df['anim_date'].astype(str)
@@ -265,14 +282,21 @@ def get_country_borders(start_date, end_date):
     # args = (start_date, end_date)
     # q = '''SELECT * from battles
     # WHERE "displaydate" BETWEEN %s AND %s'''
+
+    # args = (end_date,)
+    # q = '''SELECT * from countryborders
+    # WHERE "gwsdate"::date <= %s::date'''
+    # bordersdf = read_sql_tmpfile(q, engine, args)
+    # bordersdf = bordersdf.groupby('cntry_name')
+    # bordersdf = bordersdf.first().reset_index()
+    # bordersdf.rename(columns={'cntry_name':'cntry_name'}, inplace=True)
+
     args = (end_date,)
-    q = '''SELECT * from countryborders
+    q = '''SELECT * from countryborders2
     WHERE "gwsdate"::date <= %s::date'''
     bordersdf = read_sql_tmpfile(q, engine, args)
-    bordersdf = bordersdf.groupby('cntry_name')
-    bordersdf = bordersdf.first().reset_index()
-    bordersdf.rename(columns={'cntry_name':'cntry_name'}, inplace=True)
-    # print("borderdf ", bordersdf)
+    # bordersdf['freq_en'] =
+
     return bordersdf
 
 
@@ -290,7 +314,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     end_date = str(end_date.value)
 
     args = (lg, newspaper, start_date, end_date)
-    q = '''SELECT * from entities_2
+    q = '''SELECT * from entities
     WHERE "lang" IN %s
     AND "newspaper" IN %s
     AND "date" BETWEEN %s AND %s
@@ -314,11 +338,30 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
 
     # groups point by their geometry, so that a point only appear once
     # in the data.
-    groupby_data = map_df.groupby('geometry')
-    map_df = groupby_data.first()
+    # groupby_data = map_df.groupby('geometry')
+    # groupby_data = map_df.groupby('mention')
+    # map_df = groupby_data.first()
+    # map_df = map_df.reset_index()
+    # map_df.rename(columns={'index':'mention'})
     map_df = get_entities_hover_text(map_df)
 
     return map_df
+
+def get_country_freq(map_df, borders_df):
+    """
+
+    Calculates the frequency of each country's name
+    across languages in the selected dataset
+    """
+
+    borders_df['en_freq'] = borders_df['en_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['fr_freq'] = borders_df['fr_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['de_freq'] = borders_df['de_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['fi_freq'] = borders_df['fi_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['total_freq'] = borders_df['en_freq'] + borders_df['fr_freq'] + borders_df['de_freq'] + borders_df['fi_freq']
+
+    return borders_df
+
 
 def get_map_plot():
 
@@ -326,6 +369,18 @@ def get_map_plot():
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     bordersdf = get_country_borders(start_date, end_date)
+    bordersdf = get_country_freq(map_df, bordersdf)
+    bordersdf = get_borders_hover_text(bordersdf)
+    bordersdf = bordersdf.groupby('cntry_name')
+    bordersdf = bordersdf.first().reset_index()
+    bordersdf.rename(columns={'index':'cntry_name'}, inplace=True)
+
+    groupby_data = map_df.groupby('geometry')
+    map_df = groupby_data.first()
+    map_df = map_df.reset_index()
+    map_df.rename(columns={'index':'mention'})
+    map_df = get_entities_hover_text(map_df)
+
     bordersdf['zero'] = 0
     fig = go.Figure()
 
@@ -334,9 +389,10 @@ def get_map_plot():
         featureidkey='properties.cntry_name',
         locationmode='geojson-id',
         locations=bordersdf['cntry_name'],
-        hovertext=bordersdf['cntry_name'],
+        hovertext=bordersdf['txthover'],
         hoverinfo='text',
-        z=bordersdf['zero'],
+        # z=bordersdf['zero'],
+        z = bordersdf['total_freq'],
         showscale=False
     )
     #
@@ -354,9 +410,9 @@ def get_map_plot():
             hoverinfo='text'
         )
 
-    # fig['data'][1]['showlegend']=True
-    # fig['data'][1]['name']='Named Entity frequencies'
-    # fig['data'][1]['legendgroup']= 'Frequencies'
+    fig['data'][1]['showlegend']=True
+    fig['data'][1]['name']='Named Entity frequencies'
+    fig['data'][1]['legendgroup']= 'Frequencies'
 
     # ## Adds capital on the map
     fig.add_scattergeo(
@@ -370,7 +426,7 @@ def get_map_plot():
             ),
             hoverinfo='text'
         )
-    # fig['data'][2]['name'] = 'Capitals'
+    fig['data'][2]['name'] = 'Capitals'
 
     # Adding battle points
     fig.add_scattergeo(
@@ -384,12 +440,12 @@ def get_map_plot():
                 # color='rgb(255, 0, 0)',
                 color= df_battles['Duration'],
                 showscale = True,
-                colorscale='Blackbody',
+                colorscale='Blackbody_r',
                 opacity=0.7
             ),
             hoverinfo='text'
         )
-    # fig['data'][3]['name'] = 'Battles'
+    fig['data'][3]['name'] = 'Battles'
     fig.update_geos(
         # resolution=50,
         scope='world',
@@ -421,7 +477,6 @@ def get_map_plot():
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
 
-    # TODO: GET ALL ENTITES NOT JUST THE FIRST ONES
     # df_page = pd.DataFrame.from_dict(
     #     {"left_context":['aaaaaaa', 'iiiiiiiii'],
     #         "window_left_context": ['aaa', 'iii'],
@@ -482,6 +537,7 @@ def update_context_window(event):
     table.object = html
 
 # TODO: IF CAN BORDERS BY BACKGROUND IMAGE
+# TODO: COUNTRY FREQUENCIES WHILE UPDATING
 def update_country_borders(event):
     """
 
