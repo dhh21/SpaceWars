@@ -1,6 +1,7 @@
 import panel as pn
 
 import plotly.graph_objs as go
+import plotly.express as px
 import json
 import pandas as pd
 from sqlalchemy import create_engine
@@ -11,7 +12,8 @@ from sqlalchemy.engine.url import URL
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
        'https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css',
-       'static/css/style.css'
+       'static/css/style.css',
+       'data/ajax.txt'
 ]
 js = {
     '$': 'https://code.jquery.com/jquery-3.5.1.js',
@@ -111,6 +113,26 @@ if (document.readyState === "complete") {
 }
 </script>
 """
+#
+# script = """
+# <script>
+# $(document).ready(function() {
+#     var table = $('#example').DataTable( {
+#         ajax: 'data/ajax.txt',
+#         deferRender: true,
+#         columns: [
+#             { data: 'name' },
+#             { data: 'position' },
+#             { data: 'office' },
+#             { data: 'extn' },
+#             { data: 'start_date' },
+#             { data: 'salary' }
+#         ],
+#         select: true
+#     } );
+# } );
+# </script>
+# """
 
 def get_window(text, window=5, left=True):
     """
@@ -187,15 +209,16 @@ def get_widget_values():
 widget_values = get_widget_values()
 
 lg_select = pn.widgets.MultiSelect(name= 'Language Selection',
-                                   value = ['French', 'German', 'Finnish'],
+                                   value =
+                                   # ['French', 'German', 'Finnish'],
                                    # list(dic_lg.keys()),
-                                   # ['French'],
+                                   ['French'],
                                     options = list(dic_lg.keys()))
 
 newspapers_select = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
-                                           ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
-                                           # ['Le Matin'],
+                                           # ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
+                                           ['Le Matin'],
 
                                             options= list(dic_news.keys()))
 
@@ -208,7 +231,7 @@ start_date = pn.widgets.DatePicker(name='Start Date',
 end_date = pn.widgets.DatePicker(name='End Date',
                                  enabled_dates=widget_values['dates'],
                                  # todo: SET DEFAULT END VALUE TO 1915
-                                 value=widget_values['dates'][500]
+                                 value=widget_values['dates'][150]
 
                                  # enabled_dates = list(map_df['date'].values),
                                    )
@@ -292,7 +315,7 @@ def get_country_borders(start_date, end_date):
     # bordersdf.rename(columns={'cntry_name':'cntry_name'}, inplace=True)
 
     args = (end_date,)
-    q = '''SELECT * from countryborders2
+    q = '''SELECT * from countryborders
     WHERE "gwsdate"::date <= %s::date'''
     bordersdf = read_sql_tmpfile(q, engine, args)
     # bordersdf['freq_en'] =
@@ -335,6 +358,8 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     map_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, context_window))
     map_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, context_window, left=False))
     map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
+    map_df = get_entities_hover_text(map_df)
+
 
     # groups point by their geometry, so that a point only appear once
     # in the data.
@@ -343,7 +368,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     # map_df = groupby_data.first()
     # map_df = map_df.reset_index()
     # map_df.rename(columns={'index':'mention'})
-    map_df = get_entities_hover_text(map_df)
+    # map_df = get_entities_hover_text(map_df)
 
     return map_df
 
@@ -369,6 +394,7 @@ def get_map_plot():
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     bordersdf = get_country_borders(start_date, end_date)
+
     bordersdf = get_country_freq(map_df, bordersdf)
     bordersdf = get_borders_hover_text(bordersdf)
     bordersdf = bordersdf.groupby('cntry_name')
@@ -376,10 +402,10 @@ def get_map_plot():
     bordersdf.rename(columns={'index':'cntry_name'}, inplace=True)
 
     groupby_data = map_df.groupby('geometry')
-    map_df = groupby_data.first()
-    map_df = map_df.reset_index()
-    map_df.rename(columns={'index':'mention'})
-    map_df = get_entities_hover_text(map_df)
+    grp_map_df = groupby_data.first()
+    grp_map_df = grp_map_df.reset_index()
+    print(grp_map_df)
+    # grp_map_df.rename(columns={'index':'mention'})
 
     bordersdf['zero'] = 0
     fig = go.Figure()
@@ -397,14 +423,14 @@ def get_map_plot():
     )
     #
     fig.add_scattergeo(
-            lat=map_df['lat'],
-            lon=map_df['lon'],
+            lat=grp_map_df['lat'],
+            lon=grp_map_df['lon'],
             mode='markers',
-            hovertext = map_df['txthover'],
+            hovertext = grp_map_df['txthover'],
             marker=go.scattergeo.Marker(
-                size=map_df['freq'],
+                size=grp_map_df['freq'],
                 sizemode='area',
-                sizeref=map_df['freq'].max() / 15 ** 2
+                sizeref=grp_map_df['freq'].max() / 15 ** 2
 
             ),
             hoverinfo='text'
@@ -485,26 +511,32 @@ def get_map_plot():
     #      "window_right_context": ['aaaa', 'ooo']
     #      }
     # )
-    df_page = map_df.reset_index()
-    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
-    #
-    # html = df_page.to_html(classes=['example', 'panel-df'])
-    # table = pn.pane.HTML(html + script)
 
-    # return fig, table
+    # TODO : ONLY KEEPS 1 LINE, NOT EVERY ENTITIES
+    # TODO: MAYBE WILL REQUIRE TO CHANGE THE DATATABLE
+    df_page = grp_map_df.reset_index()
+    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+
+    # df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
+
     return fig, map_df, df_page
 
 def update_entities_plot(event):
     new_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+    groupby_data = new_df.groupby('geometry')
+    grp_map_df = groupby_data.first()
+    grp_map_df = grp_map_df.reset_index()
+    # grp_map_df.rename(columns={'index':'mention'})
+
     # todo: CHANGER INDEX QUAND LES AUTRES MAPS SERONT AJOUTEES
     entities = warmap['data'][1]
-    entities['lat'] = new_df['lat']
-    entities['lon'] = new_df['lon']
-    entities['hovertext'] = new_df['txthover']
-    entities['marker']['size'] = new_df['freq']
+    entities['lat'] = grp_map_df['lat']
+    entities['lon'] = grp_map_df['lon']
+    entities['hovertext'] = grp_map_df['txthover']
+    entities['marker']['size'] = grp_map_df['freq']
 
-    df_page = new_df.reset_index()
-    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    # df_page = new_df.reset_index()
+    df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
 
     html = df_page.to_html(classes=['example', 'panel-df'])
     html = html.replace('<table', '<table style="width:80%"')
@@ -584,14 +616,11 @@ def update_frequency_plot(event):
     table.object = html + script
 
 
-
-
-
 # adding callbacks to update entities points and table
 lg_select.param.watch(update_entities_plot, 'value')
 newspapers_select.param.watch(update_entities_plot, 'value')
-# start_date.param.watch(update_entities_plot, 'value')
-# end_date.param.watch(update_entities_plot, 'value')
+start_date.param.watch(update_entities_plot, 'value')
+end_date.param.watch(update_entities_plot, 'value')
 
 # adding callbacks to update battle points
 min_duration.param.watch(update_battle_plot, 'value')
@@ -650,12 +679,36 @@ html = filtered_page.to_html(classes=['example', 'panel-df'])
 # TODO: SOLUTION FOR NOW, MAYBE USE BREAKPOINTS IN CSS TO MAKE IT RESPONSIVE
 html = html.replace('<table', '<table style="width:80%"')
 # print("HTML ", type(html))
+#
+# html = """<table id="example" class="display" style="width:100%">
+#         <thead>
+#             <tr>
+#                 <th>Name</th>
+#                 <th>Position</th>
+#                 <th>Office</th>
+#                 <th>Extn.</th>
+#                 <th>Start date</th>
+#                 <th>Salary</th>
+#             </tr>
+#         </thead>
+#         <tfoot>
+#             <tr>
+#                 <th>Name</th>
+#                 <th>Position</th>
+#                 <th>Office</th>
+#                 <th>Extn.</th>
+#                 <th>Start date</th>
+#                 <th>Salary</th>
+#             </tr>
+#         </tfoot>
+#     </table>"""
 
 table = pn.pane.HTML(html + script, sizing_mode='stretch_width')
 tabs = pn.Tabs(
     ('Warmap', map_panel),
     ('Concordancer', table),
-    tabs_location='left'
+    tabs_location='left',
+    # dynamic=True
 )
 
 @pn.depends(map_panel.param.click_data, watch=True)
@@ -733,6 +786,16 @@ tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
 tmpl.add_panel('setting_row', setting_row)
+tmpl.servable()
+
+# df_freq = map_df[['mention', 'date']]
+# df_freq['year-month'] = pd.to_datetime(df_freq['date']).dt.to_period('M')
+# df_freq = df_freq.groupby(['mention', 'date']).size().reset_index(name='frequency')
+# # df_freq['timefreq'] = df_freq['mention'].map(map_df['mention'].value_counts()).fillna(0)
+# print(df_freq)
+# fig = px.area(df_freq[df_freq['mention'] == 'France'], x='date', y='frequency', color='mention', line_group='mention')
+# timeplot = pn.pane.Plotly(fig)
+# timeplot.servable()
 
 # pn.Row(
 #     start_date,
@@ -745,7 +808,6 @@ tmpl.add_panel('setting_row', setting_row)
 #     tabs_location='left'
 #
 # ).servable()
-tmpl.servable()
 # tabs.servable()
 # with open('test.html', 'w') as f:
 #     f.write(div)

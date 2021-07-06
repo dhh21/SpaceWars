@@ -118,7 +118,7 @@ python-debian==0.1.32
 pytz==2021.1
 pyviz-comms==2.1.0
 pyxdg==0.25
-PyYAML==3.12
+PyYAML==3.13
 pyzmq==22.0.3
 qtconsole==5.1.0
 QtPy==1.9.0
