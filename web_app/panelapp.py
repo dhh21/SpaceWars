@@ -403,11 +403,11 @@ def get_map_plot():
     bordersdf = bordersdf.first().reset_index()
     bordersdf.rename(columns={'index':'cntry_name'}, inplace=True)
 
+    df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
+
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
-    # print(grp_map_df)
-    # grp_map_df.rename(columns={'index':'mention'})
 
     bordersdf['zero'] = 0
     fig = go.Figure()
@@ -503,27 +503,16 @@ def get_map_plot():
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
 
-    # df_page = pd.DataFrame.from_dict(
-    #     {"left_context":['aaaaaaa', 'iiiiiiiii'],
-    #         "window_left_context": ['aaa', 'iii'],
-    #      "mention": ['aaaa', 'ooo'],
-    #      "right_context": ['aaaaaaaaaaaa', 'ooooooooo'],
-    #      "window_right_context": ['aaaa', 'ooo']
-    #      }
-    # )
-
-    # TODO : ONLY KEEPS 1 LINE, NOT EVERY ENTITIES
-    # TODO: MAYBE WILL REQUIRE TO CHANGE THE DATATABLE
-    # df_page = grp_map_df.reset_index()
-    # df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
-
-    df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
 
     return fig, map_df, df_page
 
 def update_entities_plot(event):
-    new_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
-    groupby_data = new_df.groupby('geometry')
+    new_map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+
+    ## updates map_df to new values
+    map_df.loc[:,:] = new_map_df
+
+    groupby_data = new_map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
     # grp_map_df.rename(columns={'index':'mention'})
@@ -535,14 +524,36 @@ def update_entities_plot(event):
     entities['hovertext'] = grp_map_df['txthover']
     entities['marker']['size'] = grp_map_df['freq']
 
-    new_df_page = new_df.reset_index()
-    new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
-    df_page['window_left_context'] = new_df_page['window_left_context']
-    df_page['mention'] = new_df_page['mention']
-    df_page['window_right_context'] = new_df_page['window_right_context']
-    df_page.dropna(inplace=True)
+    # new_df_page = new_df.reset_index()
+    new_df_page = new_map_df[['window_left_context', 'mention', 'window_right_context']]
+    df_page.iloc[:,:] = new_df_page
+    table.value = new_df_page
+
+    # df_page.dropna(inplace=True)
+
+    # table.stream(df_page, follow=False)
 
 
+def update_frequency_plot(event):
+    new_df = map_df[
+        (map_df['freq'] >= int(min_freq.value))
+        & (map_df['freq'] <= int(max_freq.value))
+    ]
+    groupby_data = new_df.groupby('geometry')
+    grp_map_df = groupby_data.first()
+    grp_map_df = grp_map_df.reset_index()
+
+    entities = warmap['data'][1]
+    entities['lat'] = grp_map_df['lat']
+    entities['lon'] = grp_map_df['lon']
+    entities['hovertext'] = grp_map_df['txthover']
+    entities['marker']['size'] = grp_map_df['freq']
+
+    new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+    df_page.iloc[:,:] = new_df_page
+    table.value = new_df_page
+    # df_page.dropna(inplace=True)
+    # table.stream(df_page, follow=False)
 
 def update_battle_plot(event):
 
@@ -565,49 +576,53 @@ def update_country_borders(event):
     # bordersmap['location'] = bordersdf['location']
     # print("BORDERS:", bordersmap.keys())
 
-# plot_panel = pn.pane.Plotly(fig, config={"responsive": True})
-# pn.pane.Plotly(fig, config={"responsive": True}, sizing_mode="stretch_both")
-## adds callback when clicking on that plot
+def update_context_window(event):
+    """
+
+    """
+
+    new_window = int(context_window.value)
+
+    new_df = map_df[['left_context', 'mention', 'right_context']]
+
+    new_df['context_word_window'] = new_window
+    new_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, new_window))
+    new_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, new_window, left=False))
+    df_page.iloc[:]['window_left_context'] = new_df['window_left_context']
+    df_page.iloc[:]['window_right_context'] = new_df['window_right_context']
+    # table.stream(df_page, follow=False)
+    table.value = df_page
+def search_entity(event):
+    """
+    Search exact entity in column
+    """
+
+    pattern = search_bar.value
+    if case_checkbox.value:
+        pattern = re.compile(f"{pattern}", re.IGNORECASE)
+    new_search_df = df_page[df_page['mention'].str.contains(pattern)]
+
+    table.value = new_search_df
+    table.value = table.value.dropna()
 
 
-# warmap, table = get_map_plot()
+def clear_concordancer(event):
+    """
+    Clear selection in concordancer and returns full data
+    """
+
+    search_bar.value = ''
+    table.value = df_page
+    print(df_page)
+
 warmap, map_df, df_page = get_map_plot()
-
-## TODO: FREQUENCIES ON THE FLY, UPDATE WIDGET EACH TIME
+copy_df = df_page.copy(deep=True)
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = '1'
                                 )
-# ## TODO: NEED THE DATA BEFORE IN ORDER TO GET THE MAXIMUM POSSIBLE FREQUENCY
 max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = map_df['freq'].max().astype('str')
                                 )
-
-def update_frequency_plot(event):
-    new_df = map_df[
-        map_df['freq'] <= int( min_freq.value)
-        & map_df['freq'] >= int(max_freq.value)
-    ]
-    entities = warmap['data'][1]
-    entities['lat'] = new_df['lat']
-    entities['lon'] = new_df['lon']
-    entities['hovertext'] = new_df['txthover']
-    entities['marker']['size'] = new_df['freq']
-
-    new_df_page = new_df.reset_index()
-    new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
-    df_page['window_left_context'] = new_df_page['window_left_context']
-    df_page['mention'] = new_df_page['mention']
-    df_page['window_right_context'] = new_df_page['window_right_context']
-    df_page.dropna(inplace=True)
-
-    # new_df_page = new_df.reset_index()
-    # new_df_page = new_df_page[['window_left_context', 'mention', 'window_right_context']]
-    # df_page.update(new_df_page)
-    # # html = df_page.to_html(classes=['example', 'panel-df'])
-    # # html = html.replace('<table', '<table style="width:80%"')
-    # #
-    # # table.object = html + script
-
 
 # adding callbacks to update entities points and table
 lg_select.param.watch(update_entities_plot, 'value')
@@ -627,23 +642,26 @@ start_date.param.watch(update_country_borders, 'value')
 end_date.param.watch(update_country_borders, 'value')
 
 # adding callbacks to update context window
-# context_window.param.watch(update_context_window, 'value')
+context_window.param.watch(update_context_window, 'value')
 
 # adding callbacks to update frequencies on plot
-min_freq.param.watch(update_entities_plot, 'value')
-max_freq.param.watch(update_entities_plot, 'value')
+min_freq.param.watch(update_frequency_plot, 'value')
+max_freq.param.watch(update_frequency_plot, 'value')
 
 
 search_bar = pn.widgets.TextInput(name='Search:')
+search_bar.param.watch(search_entity, 'value')
+
 clear_button = pn.widgets.Button(name='Clear concordancer', button_type='primary')
+clear_button.param.watch(clear_concordancer, 'value')
+
 case_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
 
 
 setting_col = pn.WidgetBox('### Options',
             lg_select, newspapers_select,
-                        # calendar,
               start_date, end_date,
-              # min_freq, max_freq,
+              min_freq, max_freq,
             min_duration, max_duration,
             front_selection,
            search_bar)
@@ -673,95 +691,6 @@ plot_config = {
 
 map_panel = pn.pane.Plotly(warmap, config=plot_config)
 
-filtered_page = df_page[['window_left_context', 'mention', 'window_right_context']]
-
-html = filtered_page.to_html(classes=['example', 'panel-df'])
-# TODO: SOLUTION FOR NOW, MAYBE USE BREAKPOINTS IN CSS TO MAKE IT RESPONSIVE
-html = html.replace('<table', '<table style="width:80%"')
-
-table = pn.pane.HTML(html + script, sizing_mode='stretch_width')
-
-def update_context_window(df, pattern):
-    """
-
-    """
-    print("context :", pattern)
-    if not pattern:
-        return df
-    new_window = int(pattern)
-
-    new_df = map_df[['left_context', 'mention', 'right_context']]
-
-    new_df['context_word_window'] = new_window
-    new_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, new_window))
-    new_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, new_window, left=False))
-    filtered_page = new_df[['window_left_context', 'mention', 'window_right_context']]
-
-    return filtered_page
-
-    # html = filtered_page.to_html(classes=['example', 'panel-df'])
-    # html = html.replace('<table', '<table style="width:80%"')
-    # html = html + script
-    # table.object = html
-
-def search_entity(df, pattern, column):
-    """
-    Search exact entity in column
-    """
-    # print(pattern)
-
-    # else:
-
-    if not pattern:
-        print('not pattern')
-        return df
-
-    if case_checkbox.value:
-        pattern = re.compile(f"{pattern}", re.IGNORECASE)
-    print(df[df[column].str.contains(pattern)])
-    return df[df[column].str.contains(pattern)]
-
-def clear_concordancer(df, pattern):
-    """
-    Clear selection in concordancer and returns full data
-    """
-    # print('clear')
-    # print(pattern)
-    if pattern:
-        print('clear')
-        search_bar.value = ''
-        return df_page
-    return df
-
-def update_table(df, pattern):
-    print('update :', pattern)
-    if pattern:
-        # print(df_page)
-        return df_page
-    return df
-
-table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
-                             pagination='remote', page_size=10)
-
-
-table.add_filter(pn.bind(update_table, pattern=lg_select))
-table.add_filter(pn.bind(update_table, pattern=newspapers_select))
-table.add_filter(pn.bind(update_table, pattern=start_date))
-table.add_filter(pn.bind(update_table, pattern=end_date))
-table.add_filter(pn.bind(update_table, pattern=min_freq))
-table.add_filter(pn.bind(update_table, pattern=max_freq))
-
-table.add_filter(pn.bind(update_context_window, pattern=context_window))
-table.add_filter(pn.bind(search_entity, pattern=search_bar, column='mention'))
-table.add_filter(pn.bind(clear_concordancer, pattern=clear_button))
-
-tabs = pn.Tabs(
-    ('Warmap', map_panel),
-    ('Concordancer', table),
-    tabs_location='left',
-    # dynamic=True
-)
-
 @pn.depends(map_panel.param.click_data, watch=True)
 def update_on_click(click_data):
     point = click_data['points'][0]
@@ -778,21 +707,40 @@ def update_on_click(click_data):
     <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
 
     entity_display.object = md_template
-    # html = df_page.to_html(classes=['example', 'panel-df']) + script
+    search_bar.value = entity_data['mention']
 
-    # new_html = df_page.iloc[point['pointIndex']:]
-    new_html = df_page[df_page['mention'] == entity_data['mention']]
-    new_html = new_html.to_html(classes=['example', 'panel-df'])
-    new_html = new_html.replace('<table', '<table style="width:80%"')
+def update_table(df, pattern):
 
-    table.object = new_html + script
+    # if not filtered_df.empty:
+    #     filtered_df.drop(df.index, inplace=True)
+    print(pattern)
+    # return df_page
+    return df
 
-# bootstrap = pn.template.BootstrapTemplate(title='WEBAPP')
-# bootstrap.sidebar.append(setting_col)
-# bootstrap.main.append(war_col)
-# bootstrap.main.append(tabs)
+table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
+                             pagination='remote', page_size=10,
+                             # configuration={'initialHeaderFilter': [{'field': 'mention', 'value':'FRANCE'}]}
+                             )
 
-# bootstrap.servable()
+
+table.add_filter(pn.bind(update_table, pattern=lg_select))
+table.add_filter(pn.bind(update_table, pattern=newspapers_select))
+table.add_filter(pn.bind(update_table, pattern=start_date))
+table.add_filter(pn.bind(update_table, pattern=end_date))
+table.add_filter(pn.bind(update_table, pattern=min_freq))
+table.add_filter(pn.bind(update_table, pattern=max_freq))
+table.add_filter(pn.bind(update_table, pattern=context_window))
+table.add_filter(pn.bind(update_table, pattern=search_bar))
+table.add_filter(pn.bind(update_table, pattern=clear_button))
+
+tabs = pn.Tabs(
+    ('Warmap', map_panel),
+    ('Concordancer', table),
+    tabs_location='left',
+    # dynamic=True
+)
+
+
 
 template = """
 
