@@ -9,7 +9,7 @@ import tempfile
 from datetime import datetime
 from sqlalchemy.engine.url import URL
 import re
-
+from io import StringIO
 
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
@@ -504,7 +504,7 @@ def get_map_plot():
     fig.update_xaxes(automargin=True)
 
 
-    return fig, map_df, df_page
+    return fig, map_df, grp_map_df, df_page
 
 def update_entities_plot(event):
     new_map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
@@ -513,9 +513,9 @@ def update_entities_plot(event):
     map_df.loc[:,:] = new_map_df
 
     groupby_data = new_map_df.groupby('geometry')
-    grp_map_df = groupby_data.first()
-    grp_map_df = grp_map_df.reset_index()
-    # grp_map_df.rename(columns={'index':'mention'})
+    new_grp_map_df = groupby_data.first()
+    new_grp_map_df = new_grp_map_df.reset_index()
+    grp_map_df.iloc[:, :] = new_grp_map_df
 
     # todo: CHANGER INDEX QUAND LES AUTRES MAPS SERONT AJOUTEES
     entities = warmap['data'][1]
@@ -540,8 +540,10 @@ def update_frequency_plot(event):
         & (map_df['freq'] <= int(max_freq.value))
     ]
     groupby_data = new_df.groupby('geometry')
-    grp_map_df = groupby_data.first()
-    grp_map_df = grp_map_df.reset_index()
+    new_grp_map_df = groupby_data.first()
+    new_grp_map_df = new_grp_map_df.reset_index()
+    grp_map_df.iloc[:, :] = new_grp_map_df
+
 
     entities = warmap['data'][1]
     entities['lat'] = grp_map_df['lat']
@@ -592,6 +594,7 @@ def update_context_window(event):
     df_page.iloc[:]['window_right_context'] = new_df['window_right_context']
     # table.stream(df_page, follow=False)
     table.value = df_page
+
 def search_entity(event):
     """
     Search exact entity in column
@@ -612,11 +615,10 @@ def clear_concordancer(event):
     """
 
     search_bar.value = ''
+    entity_display.object = ''
     table.value = df_page
-    print(df_page)
 
-warmap, map_df, df_page = get_map_plot()
-copy_df = df_page.copy(deep=True)
+warmap, map_df, grp_map_df, df_page = get_map_plot()
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = '1'
                                 )
@@ -633,8 +635,8 @@ end_date.param.watch(update_entities_plot, 'value')
 # adding callbacks to update battle points
 min_duration.param.watch(update_battle_plot, 'value')
 max_duration.param.watch(update_battle_plot, 'value')
-# start_date.param.watch(update_battle_plot, 'value')
-# end_date.param.watch(update_battle_plot, 'value')
+start_date.param.watch(update_battle_plot, 'value')
+end_date.param.watch(update_battle_plot, 'value')
 front_selection.param.watch(update_battle_plot, 'value')
 
 # adding callbacks to update country borders
@@ -696,7 +698,9 @@ def update_on_click(click_data):
     point = click_data['points'][0]
     print(point)
     pointindex = point['pointIndex']
-    entity_data = map_df.iloc[pointindex]
+    entity_data = grp_map_df.iloc[pointindex]
+    print(entity_data)
+    print(map_df.loc[pointindex])
 
     md_template = f"""<b>Entity</b>:{entity_data['mention']}<br>
     <b>Newspaper</b>: {entity_data['newspaper']}<br>
@@ -711,16 +715,47 @@ def update_on_click(click_data):
 
 def update_table(df, pattern):
 
-    # if not filtered_df.empty:
-    #     filtered_df.drop(df.index, inplace=True)
-    print(pattern)
-    # return df_page
     return df
+
 
 table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
                              pagination='remote', page_size=10,
                              # configuration={'initialHeaderFilter': [{'field': 'mention', 'value':'FRANCE'}]}
                              )
+
+# filename, download_button = table.download_menu(
+#     text_kwargs={'name': 'Enter filename', 'value': 'default.csv'},
+#     button_kwargs={'name': 'Download table'}
+# )
+
+def download_as_csv():
+    sio = StringIO()
+    table.value.to_csv(sio)
+    sio.seek(0)
+    return sio
+
+csv_download = pn.widgets.FileDownload(callback=download_as_csv, filename='concordancer.csv',
+                                       button_type='success', name='Download concordancer to CSV')
+
+def download_as_xlsx():
+    sio = StringIO()
+    table.value.to_excel(sio)
+    sio.seek(0)
+    return sio
+
+xlsx_download = pn.widgets.FileDownload(callback=download_as_xlsx, filename='concordancer.xlsx',
+                                       button_type='success', name='Download concordancer to Excel')
+
+def download_as_json():
+    sio = StringIO()
+    json_table = table.value.to_json()
+    json.dump(json_table, sio)
+    sio.seek(0)
+    return sio
+
+json_download = pn.widgets.FileDownload(callback=download_as_json, filename='concordancer.json',
+                                       button_type='primary', name='Download concordancer to JSON')
+
 
 
 table.add_filter(pn.bind(update_table, pattern=lg_select))
@@ -733,9 +768,18 @@ table.add_filter(pn.bind(update_table, pattern=context_window))
 table.add_filter(pn.bind(update_table, pattern=search_bar))
 table.add_filter(pn.bind(update_table, pattern=clear_button))
 
+
+df_freq = map_df[['mention', 'date']]
+# df_freq['year-month'] = pd.to_datetime(df_freq['date']).dt.to_period('M')
+df_freq = df_freq.groupby(['mention', 'date']).size().reset_index(name='frequency')
+# df_freq['timefreq'] = df_freq['mention'].map(map_df['mention'].value_counts()).fillna(0)
+
+fig = px.area(df_freq[df_freq['mention'] == 'France'], x='date', y='frequency', color='mention', line_group='mention')
+timeplot = pn.pane.Plotly(fig)
+
 tabs = pn.Tabs(
     ('Warmap', map_panel),
-    ('Concordancer', table),
+    ('Concordancer', pn.Row(pn.Column(table, timeplot), pn.Column(csv_download, xlsx_download, json_download) )),
     tabs_location='left',
     # dynamic=True
 )
