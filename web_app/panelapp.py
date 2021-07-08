@@ -469,8 +469,8 @@ def get_map_plot():
         y=0.99,
         xanchor="left",
         x=0.01),
-    dragmode='drawopenpath',
-    newshape_line_color='cyan',
+    # dragmode='drawopenpath',
+    # newshape_line_color='cyan',
 
     # title_text='Draw a path to separate versicolor and virginica',
     )
@@ -676,7 +676,9 @@ plot_config = {
     #                                    ]
 }
 
-map_panel = pn.pane.Plotly(warmap, config=plot_config)
+map_panel = pn.pane.Plotly(warmap,
+                           config=plot_config
+                           )
 
 @pn.depends(map_panel.param.click_data, watch=True)
 def update_on_click(click_data):
