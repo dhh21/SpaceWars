@@ -503,10 +503,15 @@ def update_entities_plot(event):
     df_page.iloc[:,:] = new_df_page
     table.value = new_df_page
 
-    # df_page.dropna(inplace=True)
+    freq_input_value = freq_input.value.replace(' ', '')
+    if freq_input_value[-1] == ',':
+        freq_input_value = freq_input_value[:-1]
+    list_keywords = freq_input_value.split(',')
 
-    # table.stream(df_page, follow=False)
-
+    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    freqplot.object = new_freq_fig
 
 def update_frequency_plot(event):
     new_df = map_df[
@@ -528,8 +533,17 @@ def update_frequency_plot(event):
     new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
     df_page.iloc[:,:] = new_df_page
     table.value = new_df_page
-    # df_page.dropna(inplace=True)
-    # table.stream(df_page, follow=False)
+
+    freq_input_value = freq_input.value.replace(' ', '')
+    if freq_input_value[-1] == ',':
+        freq_input_value = freq_input_value[:-1]
+    list_keywords = freq_input_value.split(',')
+
+    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    freqplot.object = new_freq_fig
+
 
 def update_battle_plot(event):
 
@@ -710,11 +724,6 @@ table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='check
                              # configuration={'initialHeaderFilter': [{'field': 'mention', 'value':'FRANCE'}]}
                              )
 
-# filename, download_button = table.download_menu(
-#     text_kwargs={'name': 'Enter filename', 'value': 'default.csv'},
-#     button_kwargs={'name': 'Download table'}
-# )
-
 def download_as_csv():
     sio = StringIO()
     table.value.to_csv(sio)
@@ -744,7 +753,6 @@ json_download = pn.widgets.FileDownload(callback=download_as_json, filename='con
                                        button_type='primary', name='Download concordancer to JSON')
 
 
-
 table.add_filter(pn.bind(update_table, pattern=lg_select))
 table.add_filter(pn.bind(update_table, pattern=newspapers_select))
 table.add_filter(pn.bind(update_table, pattern=start_date))
@@ -756,17 +764,47 @@ table.add_filter(pn.bind(update_table, pattern=search_bar))
 table.add_filter(pn.bind(update_table, pattern=clear_button))
 
 
-df_freq = map_df[['mention', 'date']]
-# df_freq['year-month'] = pd.to_datetime(df_freq['date']).dt.to_period('M')
-df_freq = df_freq.groupby(['mention', 'date']).size().reset_index(name='frequency')
-# df_freq['timefreq'] = df_freq['mention'].map(map_df['mention'].value_counts()).fillna(0)
+def update_freq_plot(event):
+    """
+    Updates entities frequency plot
+    """
+    freq_input_value = freq_input.value.replace(' ', '')
+    if freq_input_value[-1] == ',':
+        freq_input_value = freq_input_value[:-1]
+    list_keywords = freq_input_value.split(',')
 
-fig = px.area(df_freq[df_freq['mention'] == 'France'], x='date', y='frequency', color='mention', line_group='mention')
-timeplot = pn.pane.Plotly(fig)
+    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    freqplot.object = new_freq_fig
 
+
+freq_input = pn.widgets.TextInput(name = 'Keyword(s):', value='France,Allemagne,Vienne')
+
+x_axis_select = pn.widgets.Select(name='Select', options=['date', 'newspaper', 'lang'], value='date')
+
+freq_button = pn.widgets.Button(name= 'Search')
+
+freq_button.param.watch(update_freq_plot, 'value')
+
+freq_input_value = freq_input.value.replace(' ', '')
+if freq_input_value[-1] == ',':
+    freq_input_value = freq_input_value[:-1]
+list_keywords = freq_input_value.split(',')
+
+df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+
+freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+
+freqplot = pn.pane.Plotly(freq_fig)
+# freqplot.ob
 tabs = pn.Tabs(
     ('Warmap', map_panel),
-    ('Concordancer', pn.Row(pn.Column(table, timeplot), pn.Column(csv_download, xlsx_download, json_download) )),
+    ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
+                                                                  freq_input,
+                                                                  x_axis_select,
+                                                                  freq_button) )),
     tabs_location='left',
     # dynamic=True
 )
