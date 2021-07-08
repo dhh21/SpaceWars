@@ -94,45 +94,25 @@ dic_news = {
     # "Neue Freie Presse": 'neue_freie_presse'
 }
 
-script = """
-<script>
-function renderTable(){
-  $('.example').DataTable( {
-    dom: 'Bfrtip',
-    buttons: [
-        'copyHtml5',
-        'excelHtml5',
-        'csvHtml5',
-        'pdfHtml5'
-    ]
-} );
-}
-
-if (document.readyState === "complete") {
-  renderTable()
-} else {
-  $(document).ready(renderTable);
-}
-</script>
-"""
-#
 # script = """
 # <script>
-# $(document).ready(function() {
-#     var table = $('#example').DataTable( {
-#         ajax: 'data/ajax.txt',
-#         deferRender: true,
-#         columns: [
-#             { data: 'name' },
-#             { data: 'position' },
-#             { data: 'office' },
-#             { data: 'extn' },
-#             { data: 'start_date' },
-#             { data: 'salary' }
-#         ],
-#         select: true
-#     } );
+# function renderTable(){
+#   $('.example').DataTable( {
+#     dom: 'Bfrtip',
+#     buttons: [
+#         'copyHtml5',
+#         'excelHtml5',
+#         'csvHtml5',
+#         'pdfHtml5'
+#     ]
 # } );
+# }
+#
+# if (document.readyState === "complete") {
+#   renderTable()
+# } else {
+#   $(document).ready(renderTable);
+# }
 # </script>
 # """
 
@@ -175,7 +155,7 @@ engine = create_engine(db_config, echo=True)
 
 ## TODO : FILTER BODERS ACCORDING TO DATE AND CORRECT ISSUE WITH CAPITALS
 borderjson = json.load(open('data/borders/countryborders.geojson'))
-# #
+bordersdf = pd.read_csv('data/borders/countryborders.csv')
 
 #
 def execute_query(query, con):
@@ -316,14 +296,18 @@ def get_country_borders(start_date, end_date):
     # bordersdf = bordersdf.first().reset_index()
     # bordersdf.rename(columns={'cntry_name':'cntry_name'}, inplace=True)
 
-    args = (end_date,)
-    q = '''SELECT * from countryborders
-    WHERE "gwsdate"::date <= %s::date'''
-    bordersdf = read_sql_tmpfile(q, engine, args)
+    # args = (end_date,)
+    # q = '''SELECT * from countryborders
+    # WHERE "gwsdate"::date <= %s::date'''
+    # bordersdf = read_sql_tmpfile(q, engine, args)
     # bordersdf['freq_en'] =
+    # return bordersdf
 
+    filtered_borders = bordersdf[
+        (bordersdf['gwsdate'] <= end_date)
+    ]
+    # return filtered_borders
     return bordersdf
-
 
 
 def get_map_df(lg, newspaper, start_date, end_date, context_window):
@@ -361,16 +345,6 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     map_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, context_window, left=False))
     map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
     map_df = get_entities_hover_text(map_df)
-
-
-    # groups point by their geometry, so that a point only appear once
-    # in the data.
-    # groupby_data = map_df.groupby('geometry')
-    # groupby_data = map_df.groupby('mention')
-    # map_df = groupby_data.first()
-    # map_df = map_df.reset_index()
-    # map_df.rename(columns={'index':'mention'})
-    # map_df = get_entities_hover_text(map_df)
 
     return map_df
 
@@ -575,8 +549,19 @@ def update_country_borders(event):
     """
     bordersdf = get_country_borders(start_date, end_date)
     bordersmap = warmap['data'][0]
-    # bordersmap['location'] = bordersdf['location']
-    # print("BORDERS:", bordersmap.keys())
+    bordersmap['locations'] = bordersdf['cntry_name']
+    bordersmap['hovertext'] = bordersdf['txthover']
+    bordersmap['z'] = bordersdf['total_freq']
+    #
+    # z = bordersdf['total_freq'],
+    #
+    # # bordersmap['location'] = bordersdf['location']
+    # # print("BORDERS:", bordersmap.keys())
+    #
+    # entities['lat'] = grp_map_df['lat']
+    # entities['lon'] = grp_map_df['lon']
+    # entities['hovertext'] = grp_map_df['txthover']
+    # entities['marker']['size'] = grp_map_df['freq']
 
 def update_context_window(event):
     """

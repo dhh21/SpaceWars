@@ -1,0 +1,253 @@
+id,cntry_name,area,capname,caplong,caplat,gwcode,gwsdate,gwsyear,gwsmonth,gwsday,gwedate,gweyear,gwemonth,gweday,en_cntry_name,fr_cntry_name,de_cntry_name,fi_cntry_name
+0,Aden,46416.1,Aden,45.0333,12.8,681,31.03.1937 23:00:00,1937,4,1,02.04.1962 23:00:00,1962,4,3,Aden,Aden,Aden,Aden
+1,Afghanistan,808993,Kabul,69.1833,34.5167,700,31.12.1885 23:00:00,1886,1,1,29.12.1888 23:00:00,1888,12,30,Afghanistan,Afghanistan,Afghanistan,Afganistan
+2,Alaska,1506240,Juneau,-134.412,58.3043,3,31.12.1885 23:00:00,1886,1,1,01.01.1959 23:00:00,1959,1,2,Alaska,Alaska,Alaska,Alaska
+3,Albania,28656.5,Vlore,19.4982,40.4774,339,31.12.1912 23:00:00,1913,1,1,05.03.1914 23:00:00,1914,3,6,Albania,Albanie,Albanien,Albania
+4,Algeria,655481,Algiers,3.05056,36.7631,615,31.12.1885 23:00:00,1886,1,1,05.02.1901 23:00:00,1901,2,6,Algeria,Algérie,Algerien,Algeria
+5,Angola,409489,Luanda,13.2344,-8.83833,540,31.12.1885 23:00:00,1886,1,1,18.08.1890 23:00:00,1890,8,19,Angola,Angola,Angola,Angola
+6,Argentina,2778350,Buenos Aires,-58.6725,-34.5875,160,31.12.1885 23:00:00,1886,1,1,22.03.1899 23:00:00,1899,3,23,Argentina,Argentine,Argentinien,Argentiina
+7,Armenia,29663.6,Yerevan,44.5136,40.1811,371,25.12.1991 23:00:00,1991,12,26,30.12.2019 23:00:00,2019,12,31,Armenia,Arménie,Armenien,Armenia
+8,Australia,7686690,Melbourne,144.975,-37.82,900,31.12.1900 23:00:00,1901,1,1,07.05.1927 23:00:00,1927,5,8,Australia,Australie,Australien,Australia
+9,Austria,211936,Vienna,16.3667,48.2,305,02.11.1918 23:00:00,1918,11,3,08.09.1919 23:00:00,1919,9,9,Austria,Autriche,Österreich,Itävalta
+10,Austria-Hungary,624184,Vienna,16.3667,48.2,300,31.12.1885 23:00:00,1886,1,1,05.10.1908 23:00:00,1908,10,6,Austria-Hungary,Autriche-Hongrie,Österreich-Ungarn,Itävalta-Unkari
+11,Azerbaijan,85950.8,Baku,49.8822,40.3953,373,25.12.1991 23:00:00,1991,12,26,30.12.2019 23:00:00,2019,12,31,Azerbaijan,Azerbaïdjan,Aserbaidschan,Azerbaidžan
+12,Bahamas,12048.7,Nassau,-77.343,25.0774,31,31.12.1885 23:00:00,1886,1,1,08.07.1973 23:00:00,1973,7,9,Bahamas,Bahamas,Bahamas,Bahama
+13,Bahrain,628.767,Manama,50.5831,26.2361,692,14.08.1971 23:00:00,1971,8,15,30.12.2019 23:00:00,2019,12,31,Bahrain,Bahreïn,Bahrain,Bahrain
+14,Bangladesh,137848,Dhaka,90.4086,23.723,771,15.12.1971 23:00:00,1971,12,16,30.12.2019 23:00:00,2019,12,31,Bangladesh,Bangladesh,Bangladesch,Bangladesh
+15,Barbados,442.049,Bridgetown,-59.6167,13.1,53,31.12.1885 23:00:00,1886,1,1,28.11.1966 23:00:00,1966,11,29,Barbados,Barbade,Barbados,Barbados
+16,Belarus (Byelorussia),207712,Minsk,27.5667,53.9,370,24.08.1991 22:00:00,1991,8,25,30.12.2019 23:00:00,2019,12,31,Belarus (Byelorussia),Bélarus (Biélorussie),Belarus (Weißrussland),Valko-Venäjä (Valko-Venäjä)
+17,Belgium,30641.2,Brussels,4.33333,50.8333,211,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Belgium,Belgique,Belgien,Belgia
+18,Belize,22092.3,Belize City,-88.1884,17.4987,80,31.12.1885 23:00:00,1886,1,1,01.08.1970 23:00:00,1970,8,2,Belize,Belize,Belize,Belize
+19,Benin,36223.5,Porto-Novo,2.61667,6.48333,434,31.12.1894 23:00:00,1895,1,1,21.07.1897 23:00:00,1897,7,22,Benin,Bénin,Benin,Benin
+20,Bhutan,39840.2,Thimphu,89.6,27.4833,760,31.12.1885 23:00:00,1886,1,1,13.08.1947 23:00:00,1947,8,14,Bhutan,Bhoutan,Bhutan,Bhutan
+21,Bokhara,194115,Bukhara,64.43,39.78,7020,31.12.1885 23:00:00,1886,1,1,31.08.1920 23:00:00,1920,9,1,Bokhara,Bokhara,Bokhara,Bokhara
+22,Bolivia,1320610,La Paz,-68.15,-16.5,145,31.12.1885 23:00:00,1886,1,1,15.11.1903 23:00:00,1903,11,16,Bolivia,Bolivie,Bolivien,Bolivia
+23,Bosnia,41445.7,Sarajevo,18.383,43.85,3461,31.12.1885 23:00:00,1886,1,1,05.10.1908 23:00:00,1908,10,6,Bosnia,Bosnie,Bosnien,Bosnia ja Hertsegovina
+24,Bosnia-Herzegovina,51534.6,Sarajevo,18.3833,43.85,346,26.04.1992 22:00:00,1992,4,27,30.12.2019 23:00:00,2019,12,31,Bosnia-Herzegovina,Bosnie-Herzégovine,Bosnien-Herzegowina,Bosnia ja Hertsegovina
+25,Botswana,308337,Gaborone,25.9119,-24.6464,571,31.12.1885 23:00:00,1886,1,1,29.06.1890 23:00:00,1890,6,30,Botswana,Botswana,Botswana,Botswana
+26,Brazil,8311910,Rio de Janeiro,-43.1964,-22.9083,140,31.12.1885 23:00:00,1886,1,1,15.11.1903 23:00:00,1903,11,16,Brazil,Brésil,Brasilien,Brasilia
+27,British Bechuanaland,117117,Vryburg,24.73,-26.96,5612,31.12.1885 23:00:00,1886,1,1,28.06.1890 23:00:00,1890,6,29,British Bechuanaland,Bechuanaland britannique,Britisch Bechuanaland,Brittiläinen Bechuanaland
+28,British Cameroons,87489.2,Buea,9.231,4.155,472,27.06.1919 23:00:00,1919,6,28,18.07.1922 23:00:00,1922,7,19,British Cameroons,British Cameroons,Britisch-Kamerun,Brittiläinen Kamerun
+29,British Somaliland (Somaliland Republic),171496,Berbera,45.0164,10.4355,521,31.12.1885 23:00:00,1886,1,1,12.04.1897 23:00:00,1897,4,13,British Somaliland (Somaliland Republic),Somaliland britannique (République du Somaliland),Britisch-Somaliland (Republik Somaliland),Brittiläinen Somalimaa (Somalimaan tasavalta)
+30,British Togoland,26630.1,Ho,0.469987,6.60041,462,19.07.1922 23:00:00,1922,7,20,30.12.1955 23:00:00,1955,12,31,British Togoland,Togoland britannique,Britisch-Togoland,Brittiläinen Togoland
+31,Brunei,5728.76,Bandar Seri Begawan,114.933,4.88333,835,16.09.1888 23:00:00,1888,9,17,30.12.1983 23:00:00,1983,12,31,Brunei,Brunei,Brunei,Brunei
+32,Bulgaria,93162.1,Sofia,23.3167,42.6833,355,31.12.1885 23:00:00,1886,1,1,08.08.1913 23:00:00,1913,8,9,Bulgaria,Bulgarie,Bulgarien,Bulgaria
+66,Estonia,49294.5,Tallinn,24.7281,59.4339,366,10.11.1918 23:00:00,1918,11,11,31.05.1940 23:00:00,1940,6,1,Estonia,Estonie,Estland,Viro
+33,Burkina Faso (Upper Volta),272339,Ouagadougou,-1.52472,12.3703,439,28.02.1919 23:00:00,1919,3,1,03.09.1932 23:00:00,1932,9,4,Burkina Faso (Upper Volta),Burkina Faso (Haute-Volta),Burkina Faso (Obervolta),Burkina Faso (Ylä-Volta)
+34,Burundi,27187.7,Bujumbura,29.36,-3.37611,516,30.06.1962 23:00:00,1962,7,1,30.12.2019 23:00:00,2019,12,31,Burundi,Burundi,Burundi,Burundi
+35,Cambodia (Kampuchea),130258,Phnom Penh,104.917,11.55,811,31.12.1885 23:00:00,1886,1,1,01.10.1893 23:00:00,1893,10,2,Cambodia (Kampuchea),Cambodge (Kampuchea),Kambodscha (Kampuchea),Kambodža (Kamputsea)
+36,Cameroon,423069,Yaounde,11.5167,3.86667,471,27.06.1919 23:00:00,1919,6,28,18.07.1922 23:00:00,1922,7,19,Cameroon,Cameroun,Kamerun,Kamerun
+37,Canada,9553560,Ottawa,-75.69,45.4208,20,31.12.1885 23:00:00,1886,1,1,20.07.1948 23:00:00,1948,7,21,Canada,Canada,Kanada,Kanada
+38,Cape Colony,600802,Cape Town,18.435,-33.92,561,31.12.1885 23:00:00,1886,1,1,14.11.1895 23:00:00,1895,11,15,Cape Colony,Cape Colony,Kap Kolonie,Cape Colony
+39,Cape Verde,3997.48,Praia,-23.5167,14.9167,402,31.12.1885 23:00:00,1886,1,1,03.07.1975 23:00:00,1975,7,4,Cape Verde,Cap-Vert,Kap Verde,Kap Verde
+40,Central African Republic,618631,Bangui,18.5829,4.36808,482,10.02.1906 23:00:00,1906,2,11,28.03.1912 23:00:00,1912,3,29,Central African Republic,Centrafricaine (République),Zentralafrikanische Republik,Keski-Afrikan tasavalta
+41,Chad,1271910,N'Djamena,15.2167,11.7167,483,04.09.1900 23:00:00,1900,9,5,28.03.1912 23:00:00,1912,3,29,Chad,Tchad,Tschad,Tšad
+42,Chile,746277,Santiago,-70.6667,-33.45,155,31.12.1885 23:00:00,1886,1,1,22.03.1899 23:00:00,1899,3,23,Chile,Chili,Chile,Chile
+43,China,11146800,Beijing,116.388,39.9289,710,31.12.1885 23:00:00,1886,1,1,15.04.1895 23:00:00,1895,4,16,China,Chine,China,Kiina
+44,Colombia,1167420,Bogota,-74.0833,4.6,100,31.12.1885 23:00:00,1886,1,1,01.11.1903 23:00:00,1903,11,2,Colombia,Colombie,Kolumbien,Kolumbia
+45,Comoros,1701.11,Moroni,43.2403,-11.7042,581,26.10.1946 23:00:00,1946,10,27,04.07.1975 23:00:00,1975,7,5,Comoros,Comores,Komoren,Komorit
+46,Congo,344022,Brazzaville,15.2847,-4.25917,484,31.12.1885 23:00:00,1886,1,1,12.06.1898 23:00:00,1898,6,13,Congo,Congo,Kongo,Kongo
+47,"Congo, Democratic Republic of (Zaire)",2011840,Boma,13.05,-5.82999,490,31.12.1885 23:00:00,1886,1,1,23.05.1891 23:00:00,1891,5,24,"Congo, Democratic Republic of (Zaire)","Congo, République démocratique du (Zaïre)","Kongo, Demokratische Republik (Zaire)",Kongon demokraattinen tasavalta (Zaire)
+48,Costa Rica,51054.7,San Jose,-84.0833,9.93333,94,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Costa Rica,Costa Rica,Costa Rica,Costa Rica
+49,Cote D'Ivoire,321308,Grand Bassam,-3.74999,5.20039,437,09.01.1889 23:00:00,1889,1,10,08.03.1893 23:00:00,1893,3,9,Cote D'Ivoire,Côte d'Ivoire,Elfenbeinküste,Norsunluurannikko
+50,Croatia,55833.9,Zagreb,15.9819,45.815,344,26.04.1992 22:00:00,1992,4,27,30.12.2019 23:00:00,2019,12,31,Croatia,Croatie,Kroatien,Kroatia
+51,Cuba,109098,Havana,-82.3642,23.1319,40,31.12.1885 23:00:00,1886,1,1,08.12.1898 23:00:00,1898,12,9,Cuba,Cuba,Kuba,Kuuba
+52,Cyprus,9128.4,Nicosia,33.3667,35.1667,352,04.11.1914 23:00:00,1914,11,5,14.08.1960 23:00:00,1960,8,15,Cyprus,Chypre,Zypern,Kypros
+53,Czech Republic,78752.2,Prague,14.4667,50.0833,316,31.12.1992 23:00:00,1993,1,1,30.12.2019 23:00:00,2019,12,31,Czech Republic,République Tchèque,Tschechische Republik,Tšekin tasavalta
+54,Czechoslovakia,140397,Prague,14.4667,50.0833,315,10.11.1918 23:00:00,1918,11,11,28.09.1938 23:00:00,1938,9,29,Czechoslovakia,Tchécoslovaquie,Tschechoslowakei,Tšekkoslovakia
+55,Danzig,2037.8,Danzig,18.64,54.36,291,27.06.1919 23:00:00,1919,6,28,30.08.1938 23:00:00,1938,8,31,Danzig,Danzig,Danzig,Danzig
+56,Denmark,38679.6,Copenhagen,12.567,55.677,390,31.12.1885 23:00:00,1886,1,1,08.02.1920 23:00:00,1920,2,9,Denmark,Danemark,Dänemark,Tanska
+57,Djibouti,21433.1,Djibouti,43.1506,11.5704,522,31.12.1885 23:00:00,1886,1,1,22.01.1900 23:00:00,1900,1,23,Djibouti,Djibouti,Dschibuti,Djibouti
+58,Dominican Republic,48313.9,Santo Domingo,-69.9,18.4667,42,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Dominican Republic,République Dominicaine,Dominikanische Republik,Dominikaaninen tasavalta
+59,East Aden Protectorate,240812,Mukalla,49.1259,14.5412,6812,31.03.1937 23:00:00,1937,4,1,02.04.1962 23:00:00,1962,4,3,East Aden Protectorate,Protectorat d'Aden-Est,Protektorat Ost-Aden,Itä-Adenin protektoraatti
+60,East Timor,15024.1,Dili,125.574,-8.55861,860,31.12.1885 23:00:00,1886,1,1,15.07.1976 23:00:00,1976,7,16,East Timor,Timor oriental,Osttimor,Itä-Timor
+61,Ecuador,341770,Quito,-78.5,-0.21667,130,31.12.1885 23:00:00,1886,1,1,27.01.1942 23:00:00,1942,1,28,Ecuador,Équateur,Ecuador,Ecuador
+62,Egypt,1167780,Cairo,31.25,30.05,651,31.12.1885 23:00:00,1886,1,1,17.01.1899 23:00:00,1899,1,18,Egypt,Égypte,Ägypten,Egypti
+63,El Salvador,20555.9,San Salvador,-89.2031,13.7086,92,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,El Salvador,El Salvador,El Salvador,El Salvador
+64,Equatorial Guinea,26920.9,Malabo,8.7371,3.75041,411,31.12.1885 23:00:00,1886,1,1,25.06.1900 23:00:00,1900,6,26,Equatorial Guinea,Guinée équatoriale,Äquatorial-Guinea,Päiväntasaajan Guinea
+65,Eritrea,19030,Assab,42.6986,12.9837,531,31.12.1885 23:00:00,1886,1,1,30.04.1889 23:00:00,1889,5,1,Eritrea,Érythrée,Eritrea,Eritrea
+67,Ethiopia,280224,Addis Ababa,38.7751,9.01393,530,31.12.1885 23:00:00,1886,1,1,30.04.1889 23:00:00,1889,5,1,Ethiopia,Éthiopie,Äthiopien,Etiopia
+68,Federated Malay States,68719.7,Kuala Lumpur,101.7,3.16667,821,30.06.1896 23:00:00,1896,7,1,08.03.1909 23:00:00,1909,3,9,Federated Malay States,Etats malais fédérés,Föderierte Malaiische Staaten,Malesian liittovaltio
+69,Federation of Rhodesia and Nyasaland,1260270,Harare,31.0447,-17.8178,550,31.07.1953 23:00:00,1953,8,1,20.01.1964 23:00:00,1964,1,21,Federation of Rhodesia and Nyasaland,Fédération de Rhodésie et du Nyassaland,Föderation von Rhodesien und Njassaland,Rhodesian ja Niasalandin liitto
+70,Federation of South Arabia,287228,Aden,45.0333,12.8,6801,03.04.1962 23:00:00,1962,4,4,28.11.1967 23:00:00,1967,11,29,Federation of South Arabia,Fédération d'Arabie du Sud,Föderation von Südarabien,Etelä-Arabian liitto
+71,Fiji,18031.3,Suva,178.43,-18.1341,950,31.12.1885 23:00:00,1886,1,1,08.10.1970 23:00:00,1970,10,9,Fiji,Fidji,Fidschi,Fidži
+72,Finland,388757,Helsinki,24.9342,60.1756,375,05.12.1917 23:00:00,1917,12,6,10.03.1940 23:00:00,1940,3,11,Finland,Finlande,Finnland,Suomi
+73,France,532308,Paris,2.33333,48.8667,220,31.12.1885 23:00:00,1886,1,1,26.06.1919 23:00:00,1919,6,27,France,France,Frankreich,Ranska
+74,French Guyana,83710.8,Cayenne,-52.33,4.93299,120,31.12.1885 23:00:00,1886,1,1,04.07.1930 23:00:00,1930,7,5,French Guyana,Guyane française,Französisch-Guyana,Ranskan Guyana
+75,French Polynesia,12558.5,Pape'ete,-149.566,-17.5373,960,18.05.1903 23:00:00,1903,5,19,30.12.2019 23:00:00,2019,12,31,French Polynesia,Polynésie française,Französisch-Polynesien,Ranskan Polynesia
+76,French West Africa,5621750,Saint-Louis,-16.51,16.02,430,15.06.1895 23:00:00,1895,6,16,12.06.1898 23:00:00,1898,6,13,French West Africa,Afrique occidentale française,Französisch-Westafrika,Ranskan Länsi-Afrikka
+77,Gabon,260681,Libreville,9.45,0.38333,481,31.12.1885 23:00:00,1886,1,1,27.12.1903 23:00:00,1903,12,28,Gabon,Gabon,Gabun,Gabon
+78,Gambia,10722.1,Banjul,-16.5917,13.4539,420,09.08.1889 23:00:00,1889,8,10,16.02.1965 23:00:00,1965,2,17,Gambia,Gambie,Gambia,Gambia
+79,Gaza,373.395,Gaza,34.4668,31.5017,6511,13.05.1948 23:00:00,1948,5,14,08.06.1967 23:00:00,1967,6,9,Gaza,Gaza,Gaza,Gaza
+80,Georgia,69957.4,T'bilisi,44.7908,41.725,372,05.09.1991 22:00:00,1991,9,6,30.12.2019 23:00:00,2019,12,31,Georgia,Géorgie,Georgien,Georgia
+81,German Democratic Republic,109255,East Berlin,13.4027,52.5178,265,07.05.1945 23:00:00,1945,5,8,03.10.1949 23:00:00,1949,10,4,German Democratic Republic,République démocratique allemande,Deutsche Demokratische Republik,Saksan demokraattinen tasavalta
+82,German Federal Republic,247663,Bonn,7.1,50.7333,260,07.05.1945 23:00:00,1945,5,8,19.09.1949 23:00:00,1949,9,20,German Federal Republic,République fédérale allemande,Deutsche Bundesrepublik,Saksan liittotasavalta
+83,German Solomon Islands,16676.3,Kieta,155.624,-6.22972,9401,31.12.1885 23:00:00,1886,1,1,12.11.1899 23:00:00,1899,11,13,German Solomon Islands,Iles Salomon allemandes,Deutsch Salomonen,Saksan Salomonsaaret
+84,German Togoland,6818.25,Baguida,1.31667,6.16667,460,31.12.1885 23:00:00,1886,1,1,30.12.1886 23:00:00,1886,12,31,German Togoland,Togoland allemand,Deutsch-Togoland,Saksan Togoland
+85,Germany (Prussia),540112,Berlin,13.4,52.5167,255,31.12.1885 23:00:00,1886,1,1,26.06.1919 23:00:00,1919,6,27,Germany (Prussia),Allemagne (Prusse),Deutschland (Preußen),Saksa (Preussi)
+86,Ghana,68325.2,Accra,-0.216667,5.55,452,31.12.1885 23:00:00,1886,1,1,29.11.1888 23:00:00,1888,11,30,Ghana,Ghana,Ghana,Ghana
+87,Greece,63754.4,Athens,23.7333,37.9833,350,31.12.1885 23:00:00,1886,1,1,08.08.1913 23:00:00,1913,8,9,Greece,Grèce,Griechenland,Kreikka
+88,Guadeloupe,1651.81,Basse-Terre,-61.72,15.9966,65,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Guadeloupe,Guadeloupe,Guadeloupe,Guadeloupe
+89,Guatemala,109031,Guatemala City,-90.5269,14.6211,90,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Guatemala,Guatemala,Guatemala,Guatemala
+90,Guinea,245068,Conakry,-13.6619,9.55133,438,31.12.1893 23:00:00,1894,1,1,30.09.1958 23:00:00,1958,10,1,Guinea,Guinée,Guinea,Guinea
+91,Guinea-Bissau,33242,Bolama,-15.4828,11.5829,404,31.12.1885 23:00:00,1886,1,1,10.05.1886 23:00:00,1886,5,11,Guinea-Bissau,Guinée-Bissau,Guinea-Bissau,Guinea-Bissau
+92,Guyana,210584,Georgetown,-58.1667,6.8,110,31.12.1885 23:00:00,1886,1,1,24.05.1966 23:00:00,1966,5,25,Guyana,Guyane,Guyana,Guyana
+93,Haiti,27136.5,Port-au-Prince,-72.335,18.5392,41,31.12.1885 23:00:00,1886,1,1,03.07.1915 23:00:00,1915,7,4,Haiti,Haïti,Haiti,Haiti
+94,Hawaii,16685.6,Honolulu,-157.856,21.3075,4,05.07.1898 23:00:00,1898,7,6,19.08.1959 23:00:00,1959,8,20,Hawaii,Hawaii,Hawaii,Havaiji
+95,Herzegovina,10088.9,Mostar,17.8,43.3333,3462,31.12.1885 23:00:00,1886,1,1,05.10.1908 23:00:00,1908,10,6,Herzegovina,Herzégovine,Herzegowina,Hertsegovina
+96,Honduras,112227,Tegucigalpa,-87.2167,14.1,91,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Honduras,Honduras,Honduras,Honduras
+97,Hungary,323100,Budapest,19.0833,47.5,310,02.11.1918 23:00:00,1918,11,3,29.11.1918 23:00:00,1918,11,30,Hungary,Hongrie,Ungarn,Unkari
+98,Iceland,102889,Reykjavik,-21.95,64.15,395,31.12.1885 23:00:00,1886,1,1,29.11.1918 23:00:00,1918,11,30,Iceland,Islande,Island,Islanti
+99,India,4652720,Calcutta,88.3247,22.495,750,31.12.1885 23:00:00,1886,1,1,10.11.1893 23:00:00,1893,11,11,India,Inde,Indien,Intia
+100,Indonesia,1877240,Jakarta,106.829,-6.17444,850,31.12.1885 23:00:00,1886,1,1,18.06.1889 23:00:00,1889,6,19,Indonesia,Indonésie,Indonesien,Indonesia
+101,Inini,70642.8,Saint-Elie,-53.2764,4.8227,1201,05.07.1930 23:00:00,1930,7,6,17.03.1946 23:00:00,1946,3,18,Inini,Inini,Inini,Inini
+102,Iran (Persia),1621540,Tehran,51.4244,35.6719,630,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Iran (Persia),Iran (Perse),Iran (Persien),Iran (Persia)
+103,Iraq,274750,Baghdad,44.3939,33.3386,645,25.04.1920 23:00:00,1920,4,26,22.12.1920 23:00:00,1920,12,23,Iraq,Irak,Irak,Irak
+104,Ireland,69579.4,Dublin,-6.24889,53.3331,205,05.12.1921 23:00:00,1921,12,6,30.12.2019 23:00:00,2019,12,31,Ireland,Irlande,Irland,Irlanti
+105,Israel,20719.1,Jerusalem,35.2066,31.7784,666,13.05.1948 23:00:00,1948,5,14,08.06.1967 23:00:00,1967,6,9,Israel,Israël,Israel,Israel
+106,Italian Somaliland,370343,Mogadishu,45.3182,2.04693,5200,18.11.1889 23:00:00,1889,11,19,18.03.1897 23:00:00,1897,3,19,Italian Somaliland,Somaliland italien,Italienisches Somaliland,Italian Somalimaa
+107,Italy/Sardinia,284653,Rome,12.4833,41.9,325,31.12.1885 23:00:00,1886,1,1,08.09.1919 23:00:00,1919,9,9,Italy/Sardinia,Italie/Sardaigne,Italien/Sardinien,Italia/Sardinia
+108,Jamaica,11027.5,Kingston,-76.8,18,51,31.12.1885 23:00:00,1886,1,1,04.08.1962 23:00:00,1962,8,5,Jamaica,Jamaïque,Jamaika,Jamaika
+109,Jammu and Kashmir,105844,Srinagar,74.7973,34.0837,7506,14.08.1947 23:00:00,1947,8,15,03.01.1949 23:00:00,1949,1,4,Jammu and Kashmir,Jammu et Cachemire,Jammu und Kaschmir,Jammu ja Kashmir
+110,Japan,370951,Tokyo,139.751,35.685,740,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Japan,Japon,Japan,Japani
+111,Jordan,45147.9,Amman,35.9333,31.95,663,25.04.1920 23:00:00,1920,4,26,22.12.1920 23:00:00,1920,12,23,Jordan,Jordanie,Jordanien,Jordania
+112,Kamerun,510559,Duala,9.70999,4.06041,470,31.12.1885 23:00:00,1886,1,1,13.03.1894 23:00:00,1894,3,14,Kamerun,Kamerun,Kamerun,Kamerun
+113,"Kashmir (North, Azad)",81688.6,Gilgit,74.4643,35.8819,7708,14.08.1947 23:00:00,1947,8,15,03.01.1949 23:00:00,1949,1,4,"Kashmir (North, Azad)","Cachemire (Nord, Azad)","Kaschmir (Nord, Azad)","Kashmir (pohjoinen, Azad)"
+114,Kazakhstan,2723030,Almaty,76.915,43.325,705,25.12.1991 23:00:00,1991,12,26,08.12.1997 23:00:00,1997,12,9,Kazakhstan,Kazakhstan,Kasachstan,Kazakstan
+115,Kenya,469658,Mombasa,39.6996,-4.03688,501,14.10.1888 23:00:00,1888,10,15,22.03.1891 23:00:00,1891,3,23,Kenya,Kenya,Kenia,Kenia
+116,Khiva,101600,Khiva,60.3557,41.3911,7030,31.12.1885 23:00:00,1886,1,1,31.01.1920 23:00:00,1920,2,1,Khiva,Khiva,Chiwa,Khiva
+117,Korea,219399,Seoul,127,37.5664,730,31.12.1885 23:00:00,1886,1,1,21.08.1910 23:00:00,1910,8,22,Korea,Corée,Korea,Korea
+118,"Korea, People''s Republic of",122204,Pyongyang,125.755,39.0194,731,14.08.1945 23:00:00,1945,8,15,07.09.1948 23:00:00,1948,9,8,"Korea, People''s Republic of","Corée, République populaire de","Korea, Volksrepublik",Korean kansantasavalta
+119,"Korea, Republic of",97195.9,Seoul,127,37.5664,732,14.08.1945 23:00:00,1945,8,15,13.08.1948 23:00:00,1948,8,14,"Korea, Republic of","Corée, République de","Korea, Republik",Korean tasavalta
+120,Kosovo,10737.1,Pristina,21.1667,42.6667,347,19.02.2008 23:00:00,2008,2,20,30.12.2019 23:00:00,2019,12,31,Kosovo,Kosovo,Kosovo,Kosovo
+121,Kuwait,16750.8,Kuwait,47.9783,29.3697,690,18.06.1961 23:00:00,1961,6,19,30.12.2019 23:00:00,2019,12,31,Kuwait,Koweït,Kuwait,Kuwait
+122,Kyrgyz Republic,199565,Bishkek,74.6003,42.8731,703,31.08.1991 22:00:00,1991,9,1,30.12.2019 23:00:00,2019,12,31,Kyrgyz Republic,République kirghize,Kirgisische Republik,Kirgisian tasavalta
+123,Lagos,71584.9,Lagos,3.38587,6.50722,4781,31.12.1885 23:00:00,1886,1,1,14.02.1906 23:00:00,1906,2,15,Lagos,Lagos,Lagos,Lagos
+124,Laos,229905,Vientiane,102.6,17.9667,812,02.10.1893 23:00:00,1893,10,3,13.01.1896 23:00:00,1896,1,14,Laos,Laos,Laos,Laos
+125,Latvia,65966,Riga,24.1333,56.9667,367,17.11.1918 23:00:00,1918,11,18,31.05.1940 23:00:00,1940,6,1,Latvia,Lettonie,Lettland,Latvia
+126,Lebanon,10209.3,Beirut,35.5097,33.8719,660,25.04.1920 23:00:00,1920,4,26,22.12.1920 23:00:00,1920,12,23,Lebanon,Liban,Libanon,Libanon
+127,Lesotho,30516.1,Maseru,27.4833,-29.3167,570,31.12.1885 23:00:00,1886,1,1,02.10.1966 23:00:00,1966,10,3,Lesotho,Lesotho,Lesotho,Lesotho
+128,Liberia,96000.3,Monrovia,-10.8047,6.31056,450,31.12.1885 23:00:00,1886,1,1,06.12.1892 23:00:00,1892,12,7,Liberia,Liberia,Liberia,Liberia
+129,Libya,881852,Tripoli,13.18,32.8925,620,17.10.1912 23:00:00,1912,10,18,10.09.1919 23:00:00,1919,9,11,Libya,Libye,Libyen,Libya
+130,Lithuania,83882.2,Vilnius,25.3167,54.6833,368,15.02.1918 23:00:00,1918,2,16,05.10.1920 23:00:00,1920,10,6,Lithuania,Lituanie,Litauen,Liettua
+131,Luxembourg,2581.61,Luxembourg,6.13,49.6117,212,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Luxembourg,Luxembourg,Luxemburg,Luxemburg
+132,Macedonia (FYROM/North Macedonia),25460.6,Skopje,21.428,41.9973,343,19.11.1991 23:00:00,1991,11,20,30.12.2019 23:00:00,2019,12,31,Macedonia (FYROM/North Macedonia),Macédoine (FYROM/Macédoine du Nord),Mazedonien (FYROM/Nordmazedonien),Makedonia (EJTM/Pohjois-Makedonia)
+133,Madagascar (Malagasy),592864,Antananarivo,47.5167,-18.9167,580,31.12.1885 23:00:00,1886,1,1,04.08.1896 23:00:00,1896,8,5,Madagascar (Malagasy),Madagascar (Malagasy),Madagaskar (Madagassisch),Madagaskar (Madagaskar)
+134,Malawi,118483,Lilongwe,33.7833,-13.9833,553,09.06.1891 23:00:00,1891,6,10,30.07.1953 23:00:00,1953,7,31,Malawi,Malawi,Malawi,Malawi
+135,Malaysia,131495,Kuala Lumpur,101.7,3.16667,820,31.03.1946 23:00:00,1946,4,1,29.08.1957 23:00:00,1957,8,30,Malaysia,Malaisie,Malaysia,Malesia
+136,Maldives,33.622,Male,73.5,4.16667,781,15.12.1887 23:00:00,1887,12,16,24.05.1965 23:00:00,1965,5,25,Maldives,Maldives,Malediven,Malediivit
+137,Mali,1736750,Bamako,-7.97491,12.6177,432,31.12.1904 23:00:00,1905,1,1,21.04.1913 23:00:00,1913,4,22,Mali,Mali,Mali,Mali
+138,Malta,291.865,Valletta,14.5147,35.8997,338,31.12.1885 23:00:00,1886,1,1,19.09.1964 23:00:00,1964,9,20,Malta,Malte,Malta,Malta
+139,Martinique,1147.9,Fort-de-France,-61.0588,14.6161,66,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Martinique,Martinique,Martinique,Martinique
+140,Mauritania,947721,Nouakchott,-16.0274,18.1194,435,07.04.1904 23:00:00,1904,4,8,01.10.1904 23:00:00,1904,10,2,Mauritania,Mauritanie,Mauretanien,Mauritania
+141,Mauritius,2133.25,Port Louis,57.4989,-20.1619,590,31.12.1885 23:00:00,1886,1,1,10.03.1968 23:00:00,1968,3,11,Mauritius,Maurice,Mauritius,Mauritius
+142,Mexico,1956770,Mexico City,-99.1386,19.4342,70,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Mexico,Mexique,Mexiko,Meksiko
+143,Moldova,33681.8,Chisinau,28.8575,47.0056,359,24.08.1991 22:00:00,1991,8,25,30.12.2019 23:00:00,2019,12,31,Moldova,Moldavie,Moldawien,Moldova
+144,Mongolia,1562920,Ulan Bator,106.917,47.9167,712,12.03.1921 23:00:00,1921,3,13,30.12.2019 23:00:00,2019,12,31,Mongolia,Mongolie,Mongolei,Mongolia
+145,Montenegro,9949.51,Cetinje,18.9116,42.3931,341,31.12.1885 23:00:00,1886,1,1,08.08.1913 23:00:00,1913,8,9,Montenegro,Monténégro,Montenegro,Montenegro
+146,Morocco,374439,Rabat,-6.83,34.02,600,31.12.1885 23:00:00,1886,1,1,23.12.1902 23:00:00,1902,12,24,Morocco,Maroc,Marokko,Marokko
+147,Mozambique,633863,Maputo,32.5892,-25.9653,541,31.12.1885 23:00:00,1886,1,1,09.06.1891 23:00:00,1891,6,10,Mozambique,Mozambique,Mosambik,Mosambik
+148,Myanmar (Burma),666947,Rangoon,96.1667,16.7833,775,31.03.1937 23:00:00,1937,4,1,02.01.1948 23:00:00,1948,1,3,Myanmar (Burma),Myanmar (Birmanie),Myanmar (Birma),Myanmar (Burma)
+149,Namibia,699703,Windhoek,17.0836,-22.57,565,31.12.1885 23:00:00,1886,1,1,28.12.1886 23:00:00,1886,12,29,Namibia,Namibie,Namibia,Namibia
+150,Natal,43595.6,Pietermatritzburg,30.39,-29.61,562,31.12.1885 23:00:00,1886,1,1,21.04.1895 23:00:00,1895,4,22,Natal,Natal,Natal,Natal
+151,Nepal,147167,Kathmandu,85.3167,27.7167,790,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Nepal,Népal,Nepal,Nepal
+152,Netherlands,34937.8,Amsterdam,4.91667,52.35,210,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Netherlands,Pays-Bas,Niederlande,Alankomaat
+153,New Caledonia and Dependencies,23883.1,Nouméa,166.458,-22.2758,930,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,New Caledonia and Dependencies,Nouvelle-Calédonie et dépendances,Neukaledonien und Dependenzen,Uusi-Kaledonia ja riippuvuudet
+154,New Guinea (German New Guinea) (Kaiser Wilhelmsland),228300,Finschhafen,147.85,-6.6,912,31.12.1885 23:00:00,1886,1,1,30.12.1890 23:00:00,1890,12,31,New Guinea (German New Guinea) (Kaiser Wilhelmsland),Nouvelle-Guinée (Nouvelle-Guinée allemande) (Kaiser Wilhelmsland),Neuguinea (Deutsch-Neuguinea) (Kaiser Wilhelmsland),Uusi-Guinea (Saksan Uusi-Guinea) (Kaiser Wilhelmsland)
+155,New South Wales,796177,Sydney,151.185,-33.92,901,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,New South Wales,Nouvelle-Galles du Sud,Neusüdwales,Uusi Etelä-Wales
+156,New Zealand,268491,Wellington,174.783,-41.3,920,31.12.1885 23:00:00,1886,1,1,30.08.1907 23:00:00,1907,8,31,New Zealand,Nouvelle-Zélande,Neu Seeland,Uusi-Seelanti
+157,Newfoundland,398416,St. John's,-52.681,47.585,21,31.12.1885 23:00:00,1886,1,1,20.07.1948 23:00:00,1948,7,21,Newfoundland,Terre-Neuve,Neufundland,Newfoundland
+158,Nicaragua,128097,Managua,-86.2683,12.1508,93,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Nicaragua,Nicaragua,Nicaragua,Nicaragua
+159,Niger,1182030,Zinder,8.98332,13.8,436,31.12.1904 23:00:00,1905,1,1,26.12.1926 23:00:00,1926,12,27,Niger,Niger,Niger,Niger
+160,Nigeria,862504,Abuja,7.53333,9.08333,475,31.12.1913 23:00:00,1914,1,1,29.09.1960 23:00:00,1960,9,30,Nigeria,Nigeria,Nigeria,Nigeria
+161,Northeastern Rhodesia,285474,Chipata (Fort Jameson),32.6333,-13.65,5518,28.01.1900 23:00:00,1900,1,29,16.08.1911 23:00:00,1911,8,17,Northeastern Rhodesia,Rhodésie du Nord-Est,Nordöstliches Rhodesien,Koillis-Rhodesia
+162,Northern Nigeria,727266,Lokoja,6.73994,7.80039,4784,31.12.1898 23:00:00,1899,1,1,30.12.1902 23:00:00,1902,12,31,Northern Nigeria,Nord du Nigeria,Nordnigeria,Pohjois-Nigeria
+163,Northwestern Rhodesia,369534,Livingstone,25.86,-17.86,5519,28.01.1900 23:00:00,1900,1,29,28.05.1905 23:00:00,1905,5,29,Northwestern Rhodesia,Rhodésie du Nord-Ouest,Nordwest-Rhodesien,Luoteis-Rhodesia
+164,Norway,320641,Oslo,10.7522,59.9139,385,25.08.1905 23:00:00,1905,8,26,30.12.2019 23:00:00,2019,12,31,Norway,Norvège,Norwegen,Norja
+199,Somalia,636245,Mogadishu,45.3667,2.06667,520,30.06.1960 23:00:00,1960,7,1,30.12.2019 23:00:00,2019,12,31,Somalia,Somalie,Somalia,Somalia
+165,Oil Rivers Protectorate,130337,Old Calabar (Calabar),8.31667,4.95,4782,31.12.1885 23:00:00,1886,1,1,30.12.1898 23:00:00,1898,12,31,Oil Rivers Protectorate,Protectorat de Oil Rivers,Protektorat Ölflüsse,Öljyjokien protektoraatti
+166,Oman,308791,Masqat,58.5933,23.6133,698,31.12.1885 23:00:00,1886,1,1,21.02.1990 23:00:00,1990,2,22,Oman,Oman,Oman,Oman
+167,Orange Free State,129711,Bloemfontein,26.2299,-29.12,564,31.12.1885 23:00:00,1886,1,1,28.05.1910 23:00:00,1910,5,29,Orange Free State,État libre d'Orange,Oranje-Freistaat,Oranian vapaavaltio
+168,Pahang,36294.2,Pekan,103.39,3.4921,8203,31.12.1887 23:00:00,1888,1,1,29.06.1896 23:00:00,1896,6,30,Pahang,Pahang,Pahang,Pahang
+169,Pakistan,932698,Karachi,66.99,24.87,770,14.08.1947 23:00:00,1947,8,15,03.01.1949 23:00:00,1949,1,4,Pakistan,Pakistan,Pakistan,Pakistan
+170,Palestine,26963.7,(East) Jerusalem,35.2066,31.7784,665,25.04.1920 23:00:00,1920,4,26,22.12.1920 23:00:00,1920,12,23,Palestine,Palestine,Palästina,Palestiina
+171,Panama,74108.4,Panama City,-79.5333,8.96667,95,02.11.1903 23:00:00,1903,11,3,30.12.2019 23:00:00,2019,12,31,Panama,Panama,Panama,Panama
+172,Papua,223928,Port Moresby,147.193,-9.46471,911,31.12.1885 23:00:00,1886,1,1,30.12.1887 23:00:00,1887,12,31,Papua,Papouasie,Papua,Papua
+173,Papua New Guinea,461689,Port Moresby,147.193,-9.46472,910,30.06.1949 23:00:00,1949,7,1,14.09.1975 23:00:00,1975,9,15,Papua New Guinea,Papouasie-Nouvelle-Guinée,Papua-Neuguinea,Papua-Uusi-Guinea
+174,Paraguay,293507,Asuncion,-57.6667,-25.2667,150,31.12.1885 23:00:00,1886,1,1,19.07.1938 23:00:00,1938,7,20,Paraguay,Paraguay,Paraguay,Paraguay
+175,Perak,18099.7,Taiping,100.72,4.86496,8201,31.12.1885 23:00:00,1886,1,1,29.06.1896 23:00:00,1896,6,30,Perak,Perak,Perak,Perak
+176,Peru,1277670,Lima,-77.05,-12.05,135,31.12.1885 23:00:00,1886,1,1,07.07.1909 23:00:00,1909,7,8,Peru,Pérou,Peru,Peru
+177,Philippines,292049,Manila,120.982,14.6042,840,31.12.1885 23:00:00,1886,1,1,09.12.1898 23:00:00,1898,12,10,Philippines,Philippines,Philippinen,Filippiinit
+178,Poland,130204,Warsaw,21,52.25,290,10.11.1918 23:00:00,1918,11,11,26.06.1919 23:00:00,1919,6,27,Poland,Pologne,Polen,Puola
+179,Portugal,91871.8,Lisbon,-9.13333,38.7167,235,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Portugal,Portugal,Portugal,Portugali
+180,Puerto Rico,9147.38,San Juan,-66.1057,18.4655,6,31.12.1885 23:00:00,1886,1,1,08.12.1898 23:00:00,1898,12,9,Puerto Rico,Puerto Rico,Puerto Rico,Puerto Rico
+181,Qatar,11089.2,Doha,51.5333,25.2867,694,02.11.1916 23:00:00,1916,11,3,01.09.1971 23:00:00,1971,9,2,Qatar,Qatar,Katar,Qatar
+182,Queensland,1748620,Brisbane,153.035,-27.455,905,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,Queensland,Queensland,Queensland,Queensland
+183,Reunion,2642.07,Saint-Denis,55.4551,-20.8907,585,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Reunion,Réunion,Wiedervereinigung,Reunion
+184,Rumania,128499,Bucharest,26.1,44.4333,360,31.12.1885 23:00:00,1886,1,1,08.08.1913 23:00:00,1913,8,9,Rumania,Roumanie,Rumänien,Romania
+185,Russia (Soviet Union),22016200,Saint Petersburg (Petrograd),30.316,59.939,365,31.12.1885 23:00:00,1886,1,1,03.09.1905 23:00:00,1905,9,4,Russia (Soviet Union),Russie (Union soviétique),Russland (Sowjetunion),Venäjä (Neuvostoliitto)
+186,Rwanda,25138,Kigali,30.0606,-1.95361,517,30.06.1962 23:00:00,1962,7,1,30.12.2019 23:00:00,2019,12,31,Rwanda,Rwanda,Ruanda,Ruanda
+187,Rwanda-Urundi,52325.6,Usumbura,29.36,-3.37609,515,27.06.1920 23:00:00,1920,6,28,18.07.1922 23:00:00,1922,7,19,Rwanda-Urundi,Rwanda-Urundi,Ruanda-Urundi,Ruanda-Urundi
+188,Sabah (North Borneo),72619.8,Sandakan (Elopura),118.108,5.84296,823,11.05.1888 23:00:00,1888,5,12,18.06.1889 23:00:00,1889,6,19,Sabah (North Borneo),Sabah (Bornéo Nord),Sabah (Nord Borneo),Sabah (Pohjois-Borneo)
+189,Sarawak,124276,Kuching,110.33,1.52997,824,13.06.1888 23:00:00,1888,6,14,18.06.1889 23:00:00,1889,6,19,Sarawak,Sarawak,Sarawak,Sarawak
+190,Saudi Arabia,1954450,Riyadh,46.7728,24.6408,670,22.09.1932 23:00:00,1932,9,23,30.12.1934 23:00:00,1934,12,31,Saudi Arabia,Arabie Saoudite,Saudi-Arabien,Saudi-Arabia
+191,Selangore,6856.45,Kuala Lumpur,101.7,3.16667,8202,31.12.1885 23:00:00,1886,1,1,29.06.1896 23:00:00,1896,6,30,Selangore,Selangore,Selangore,Selangore
+192,Senegal,195997,Dakar,-17.4553,14.7089,433,31.12.1885 23:00:00,1886,1,1,02.04.1959 23:00:00,1959,4,3,Senegal,Sénégal,Senegal,Senegal
+193,Serbia,52533.9,Belgrade,20.4681,44.8186,340,31.12.1885 23:00:00,1886,1,1,08.08.1913 23:00:00,1913,8,9,Serbia,Serbie,Serbien,Serbia
+194,Sierra Leone,83201.4,Freetown,-13.2342,8.49,451,31.12.1885 23:00:00,1886,1,1,08.08.1889 23:00:00,1889,8,9,Sierra Leone,Sierra Leone,Sierra Leone,Sierra Leone
+195,Singapore,544.72,Singapore City,103.856,1.29306,830,31.03.1946 23:00:00,1946,4,1,30.12.1962 23:00:00,1962,12,31,Singapore,Singapour,Singapur,Singapore
+196,Slovakia,48927.4,Bratislava,17.1167,48.15,317,31.12.1992 23:00:00,1993,1,1,30.12.2019 23:00:00,2019,12,31,Slovakia,Slovaquie,Slowakei,Slovakia
+197,Slovenia,20426.5,Ljubljana,14.5144,46.0553,349,26.04.1992 22:00:00,1992,4,27,30.12.2019 23:00:00,2019,12,31,Slovenia,Slovénie,Slowenien,Slovenia
+198,Solomon Islands,19641.2,Tulaghi,160.148,-9.08558,940,14.03.1893 23:00:00,1893,3,15,12.11.1899 23:00:00,1899,11,13,Solomon Islands,Solomon Islands,Salomon-Inseln,Salomonsaaret
+200,South Africa,1220230,Pretoria,28.2294,-25.7069,560,30.05.1910 23:00:00,1910,5,31,30.12.2019 23:00:00,2019,12,31,South Africa,Afrique du Sud,Süd-Afrika,Etelä-Afrikka
+201,South Australia,2313360,Adelaide,138.6,-34.935,903,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,South Australia,South Australia,Südaustralien,Etelä-Australia
+202,South Sudan,627325,Juba,31.6,4.85,626,08.07.2011 22:00:00,2011,7,9,30.12.2019 23:00:00,2019,12,31,South Sudan,Sud-Soudan,Südsudan,Etelä-Sudan
+203,Southern Nigeria,130337,Old Calabar (Calabar),8.31667,4.95,4783,31.12.1898 23:00:00,1899,1,1,14.02.1906 23:00:00,1906,2,15,Southern Nigeria,Sud du Nigeria,Südliches Nigeria,Etelä-Nigeria
+204,Southern Sakhalin Island,32106.4,Toyohara,142.74,46.965,7351,04.09.1905 23:00:00,1905,9,5,13.08.1945 23:00:00,1945,8,14,Southern Sakhalin Island,Sud de l'île de Sakhaline,Südliche Sakhalin-Insel,Etelä-Sahalinin saari
+205,Southern zone of Spanish Morocco,28688.9,Tarfaya,-12.9222,27.9389,6021,06.04.1956 23:00:00,1956,4,7,08.04.1958 23:00:00,1958,4,9,Southern zone of Spanish Morocco,Zone sud du Maroc espagnol,Südliche Zone von Spanisch-Marokko,Espanjan Marokon eteläinen vyöhyke
+206,Spain,506124,Madrid,-3.68333,40.4,230,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Spain,Espagne,Spanien,Espanja
+207,Spanish Morocco,52796.1,Tetuan,-5.36667,35.5667,602,26.11.1912 23:00:00,1912,11,27,05.04.1956 23:00:00,1956,4,6,Spanish Morocco,Maroc espagnol,Spanisches Marokko,Espanjan Marokko
+208,Spanish Sahara,269072,El Aaiun,-13.2,27.15,609,09.10.1958 23:00:00,1958,10,10,12.11.1975 23:00:00,1975,11,13,Spanish Sahara,Sahara espagnol,Spanische Sahara,Espanjan Sahara
+209,Spanish West Africa,176416,Villa Cisneros,-15.9368,23.7141,610,31.12.1885 23:00:00,1886,1,1,25.06.1900 23:00:00,1900,6,26,Spanish West Africa,Afrique occidentale espagnole,Spanisches Westafrika,Espanjan Länsi-Afrikka
+210,Sri Lanka (Ceylon),65983.3,Colombo,79.8478,6.93194,780,31.12.1885 23:00:00,1886,1,1,02.02.1948 23:00:00,1948,2,3,Sri Lanka (Ceylon),Sri Lanka (Ceylan),Sri Lanka (Ceylon),Sri Lanka (Ceylon)
+211,Straits Settlements,3601.28,Singapore City,103.852,1.29027,827,31.12.1885 23:00:00,1886,1,1,30.03.1946 23:00:00,1946,3,31,Straits Settlements,Colonies du détroit,Meerengen-Siedlungen,Salmen siirtokunnat
+212,Sudan,2590390,Khartoum,32.5342,15.5881,625,18.01.1899 23:00:00,1899,1,19,13.05.1902 23:00:00,1902,5,14,Sudan,Soudan,Sudan,Sudan
+213,Surinam,144985,Paramaribo,-55.1667,5.83333,115,31.12.1885 23:00:00,1886,1,1,13.12.1954 23:00:00,1954,12,14,Surinam,Surinam,Surinam,Surinam
+214,Swaziland (Eswatini),17110.8,Mbabane,31.1333,-26.3167,572,20.02.1895 23:00:00,1895,2,21,05.08.1902 23:00:00,1902,8,6,Swaziland (Eswatini),Swaziland (Eswatini),Swasiland (Eswatini),Swazimaa (Eswatini)
+215,Sweden,766624,Stockholm,18.0745,59.3399,380,31.12.1885 23:00:00,1886,1,1,24.08.1905 23:00:00,1905,8,25,Sweden,Suède,Schweden,Ruotsi
+216,Switzerland,41497,Bern,7.46667,46.9167,225,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Switzerland,Suisse,Schweiz,Sveitsi
+217,Syria,182444,Damascus,36.3,33.5,652,25.04.1920 23:00:00,1920,4,26,22.12.1920 23:00:00,1920,12,23,Syria,Syrie,Syrien,Syyria
+218,Taiwan,35989.5,Taipei,121.525,25.0392,713,16.04.1895 23:00:00,1895,4,17,13.08.1945 23:00:00,1945,8,14,Taiwan,Taïwan,Taiwan,Taiwan
+219,Tajikistan,142405,Dushanbe,68.7739,38.56,702,05.09.1991 22:00:00,1991,9,6,30.12.2019 23:00:00,2019,12,31,Tajikistan,Tadjikistan,Tadschikistan,Tadžikistan
+220,Tanzania (Tanganyika),991095,Dodoma,35.7419,-6.173,510,31.12.1890 23:00:00,1891,1,1,07.10.1916 23:00:00,1916,10,8,Tanzania (Tanganyika),Tanzanie (Tanganyika),Tansania (Tanganjika),Tansania (Tanganyika)
+221,Tasmania,68137.8,Hobart,147.295,-42.85,906,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,Tasmania,Tasmanie,Tasmanien,Tasmania
+222,Thailand,778579,Bangkok,100.517,13.75,800,31.12.1885 23:00:00,1886,1,1,01.10.1893 23:00:00,1893,10,2,Thailand,Thaïlande,Thailand,Thaimaa
+223,Tibet,1886260,Lhasa,91.1,29.645,711,31.12.1912 23:00:00,1913,1,1,01.07.1914 23:00:00,1914,7,2,Tibet,Tibet,Tibet,Tiibet
+224,Togo,57094.5,Lome,1.23136,6.1725,461,19.07.1922 23:00:00,1922,7,20,25.04.1960 23:00:00,1960,4,26,Togo,Togo,Togo,Togo
+225,Transvaal,301824,Pretoria,28.2294,-25.7069,563,31.12.1885 23:00:00,1886,1,1,28.05.1910 23:00:00,1910,5,29,Transvaal,Transvaal,Transvaal,Transvaal
+226,Trinidad and Tobago,4996.4,Port-of-Spain,-61.5167,10.65,52,31.12.1885 23:00:00,1886,1,1,29.08.1962 23:00:00,1962,8,30,Trinidad and Tobago,Trinité-et-Tobago,Trinidad und Tobago,Trinidad ja Tobago
+227,Tunisia,155358,Tunis,10.1797,36.8028,616,31.12.1885 23:00:00,1886,1,1,30.12.1955 23:00:00,1955,12,31,Tunisia,Tunisie,Tunesien,Tunisia
+228,Turkey (Ottoman Empire),2823070,Istanbul,28.9795,41.0151,640,31.12.1885 23:00:00,1886,1,1,16.10.1912 23:00:00,1912,10,17,Turkey (Ottoman Empire),Turquie (Empire ottoman),Türkei (Osmanisches Reich),Turkki (Osmanien valtakunta)
+229,Turkmenistan,471677,Ashgabat,58.3833,37.95,701,26.10.1991 23:00:00,1991,10,27,30.12.2019 23:00:00,2019,12,31,Turkmenistan,Turkménistan,Turkmenistan,Turkmenistan
+230,Uganda,381361,Kampala,32.5656,0.31556,500,07.06.1894 23:00:00,1894,6,8,13.05.1902 23:00:00,1902,5,14,Uganda,Ouganda,Uganda,Uganda
+231,Ukraine,597503,Kiev,30.5167,50.4333,369,25.12.1991 23:00:00,1991,12,26,16.03.2014 23:00:00,2014,3,17,Ukraine,Ukraine,Ukraine,Ukraina
+232,Unfederated Malay States,19111.8,Johor Bahru,103.741,1.4927,822,31.12.1885 23:00:00,1886,1,1,08.03.1909 23:00:00,1909,3,9,Unfederated Malay States,États malais non fédérés,Unföderierte Malaiische Staaten,Malesian liittoutumattomat osavaltiot
+233,United Arab Emirates,70228.1,Abu Dhabi,54.3667,24.4667,696,07.03.1892 23:00:00,1892,3,8,27.07.1913 23:00:00,1913,7,28,United Arab Emirates,Émirats arabes unis,Vereinigte Arabische Emirate,Yhdistyneet arabiemiirikunnat
+234,United Kingdom,313670,London,-0.116667,51.5,200,31.12.1885 23:00:00,1886,1,1,04.12.1921 23:00:00,1921,12,5,United Kingdom,Royaume-Uni,Vereinigtes Königreich,Yhdistynyt kuningaskunta
+235,United States of America,7940050,Washington,-77.0367,38.895,2,31.12.1885 23:00:00,1886,1,1,01.01.1959 23:00:00,1959,1,2,United States of America,Etats-Unis d'Amérique,Vereinigte Staaten von Amerika,Amerikan yhdysvallat
+236,Uruguay,177857,Montevideo,-56.1708,-34.8581,165,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Uruguay,Uruguay,Uruguay,Uruguay
+237,Uzbekistan,446675,Tashkent,69.25,41.3167,704,31.08.1991 22:00:00,1991,9,1,30.12.2019 23:00:00,2019,12,31,Uzbekistan,Ouzbékistan,Usbekistan,Uzbekistan
+238,Venezuela,910834,Caracas,-66.9167,10.5,101,31.12.1885 23:00:00,1886,1,1,30.12.2019 23:00:00,2019,12,31,Venezuela,Venezuela,Venezuela,Venezuela
+239,Victoria,238068,Melbourne,144.975,-37.82,904,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,Victoria,Victoria,Victoria,Victoria
+240,Vietnam (Annam/Cochin China/Tonkin),379848,Hue,107.58,16.47,815,31.12.1885 23:00:00,1886,1,1,30.05.1887 23:00:00,1887,5,31,Vietnam (Annam/Cochin China/Tonkin),Vietnam (Annam/Cochin Chine/Tonkin),Vietnam (Annam/Cochin China/Tonkin),Vietnam (Annam/Cochin Kiina/Tonkin)
+241,"Vietnam, Democratic Republic of",155654,Hanoi,105.85,21.0333,816,30.04.1954 23:00:00,1954,5,1,29.04.1975 23:00:00,1975,4,30,"Vietnam, Democratic Republic of","Vietnam, République démocratique du","Vietnam, Demokratische Republik","Vietnam, demokraattinen tasavalta"
+242,"Vietnam, Republic of",168563,Saigon,106.667,10.75,817,30.04.1954 23:00:00,1954,5,1,29.04.1975 23:00:00,1975,4,30,"Vietnam, Republic of","Vietnam, République du","Vietnam, Republik",Vietnamin tasavalta
+243,West Bank,5871.19,East Jerusalem,35.2339,31.7834,6631,13.05.1948 23:00:00,1948,5,14,08.06.1967 23:00:00,1967,6,9,West Bank,Cisjordanie,Westjordanland,Länsiranta
+244,West Irian (Dutch New Guinea),410361,Hollandia,140.7,-2.53299,851,28.12.1949 23:00:00,1949,12,29,13.08.1962 23:00:00,1962,8,14,West Irian (Dutch New Guinea),Irian occidental (Nouvelle-Guinée néerlandaise),West Irian (Niederländisch-Neuguinea),Länsi-Irian (Alankomaiden Uusi-Guinea)
+245,Western Australia,2521930,Perth,115.84,-31.955,902,31.12.1885 23:00:00,1886,1,1,30.12.1900 23:00:00,1900,12,31,Western Australia,Australie occidentale,Westaustralien,Länsi-Australia
+246,Yemen (Arab Republic of Yemen),136558,Sana'a,44.1833,15.2833,678,29.10.1918 23:00:00,1918,10,30,12.06.1934 23:00:00,1934,6,13,Yemen (Arab Republic of Yemen),Yémen (République arabe du Yémen),Jemen (Arabische Republik Jemen),Jemen (Jemenin arabitasavalta)
+247,"Yemen, People''s Republic of",287228,Aden,45.0333,12.8,680,29.11.1967 23:00:00,1967,11,30,20.05.1990 22:00:00,1990,5,21,"Yemen, People''s Republic of","Yémen, République populaire du","Jemen, Volksrepublik",Jemenin kansantasavalta
+248,Yugoslavia,157994,Belgrade,20.4681,44.8186,345,30.11.1918 23:00:00,1918,12,1,08.09.1919 23:00:00,1919,9,9,Yugoslavia,Yougoslavie,Jugoslawien,Jugoslavia
+249,Zambia,751927,Lusaka,28.2833,-15.4167,551,17.08.1911 23:00:00,1911,8,18,30.07.1953 23:00:00,1953,7,31,Zambia,Zambie,Sambia,Sambia
+250,Zanzibar,2591.2,Zanzibar City,39.1956,-6.16698,511,30.06.1890 23:00:00,1890,7,1,29.06.1895 23:00:00,1895,6,30,Zanzibar,Zanzibar,Sansibar,Sansibar
+251,Zimbabwe (Rhodesia),389856,Harare,31.0447,-17.8178,552,31.12.1888 23:00:00,1889,1,1,09.06.1891 23:00:00,1891,6,10,Zimbabwe (Rhodesia),Zimbabwe (Rhodésie),Simbabwe (Rhodesien),Zimbabwe (Rhodesia)
