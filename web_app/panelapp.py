@@ -510,7 +510,10 @@ def update_entities_plot(event):
 
     df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
     df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    if x_axis_select.value != 'date':
+        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+    else:
+        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
     freqplot.object = new_freq_fig
 
 def update_frequency_plot(event):
@@ -541,7 +544,10 @@ def update_frequency_plot(event):
 
     df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
     df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    if x_axis_select.value != 'date':
+        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+    else:
+        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
     freqplot.object = new_freq_fig
 
 
@@ -775,7 +781,10 @@ def update_freq_plot(event):
 
     df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
     df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    if x_axis_select.value != 'date':
+        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+    else:
+        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
     freqplot.object = new_freq_fig
 
 
@@ -798,7 +807,6 @@ df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
 freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
 
 freqplot = pn.pane.Plotly(freq_fig)
-# freqplot.ob
 tabs = pn.Tabs(
     ('Warmap', map_panel),
     ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
