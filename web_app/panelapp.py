@@ -199,7 +199,7 @@ start_date = pn.widgets.DatePicker(name='Start Date',
 end_date = pn.widgets.DatePicker(name='End Date',
                                  enabled_dates=widget_values['dates'],
                                  # todo: SET DEFAULT END VALUE TO 1915
-                                 value=widget_values['dates'][150]
+                                 value=widget_values['dates'][100]
                                  # value=widget_values['dates'][1000]
 
                                  # enabled_dates = list(map_df['date'].values),
@@ -360,9 +360,8 @@ def get_country_freq(map_df, borders_df):
     return borders_df
 
 token = open(".mapbox_token").read() # you will need your own token
-print(token)
-def get_map_plot():
 
+def get_map_plot():
 
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
@@ -382,66 +381,97 @@ def get_map_plot():
 
     bordersdf['zero'] = 0
     fig = go.Figure()
-    fig = go.Figure(
-        go.Scattermapbox(
-        mode="markers",
-        lon=bordersdf['caplong'],
-        lat=bordersdf['caplat'],
-            marker={'size': 20, 'color': ["cyan"]})
-    )
+
+    fig.add_scattermapbox(
+            lat=bordersdf['caplat'],
+            lon=bordersdf['caplong'],
+            mode='markers',
+            hovertext = bordersdf['capname'],
+            # marker_symbol = 'hexagon',
+            marker=go.scattermapbox.Marker(
+                size = 15
+            ),
+            hoverinfo='text'
+        )
+
+    fig['data'][0]['name'] = 'Capitals'
+
     fig.add_scattermapbox(
             lat=grp_map_df['lat'],
             lon=grp_map_df['lon'],
             mode='markers',
             hovertext = grp_map_df['txthover'],
-            # marker=go.scattergeo.Marker(
-            #     size=grp_map_df['freq'],
-            #     sizemode='area',
-            #     sizeref=grp_map_df['freq'].max() / 15 ** 2
-            #
-            # ),
+            marker=go.scattermapbox.Marker(
+                size=grp_map_df['freq'],
+                sizemin = grp_map_df['freq'].min() * 2,
+                sizemode='area',
+                sizeref=grp_map_df['freq'].max() / 15 ** 2
+
+            ),
             hoverinfo='text'
         )
-    # fig.add_scattergeo(
-    #         lat=bordersdf['caplat'],
-    #         lon=bordersdf['caplong'],
-    #         mode='markers',
-    #         hovertext = bordersdf['capname'],
-    #         marker_symbol = 'hexagon',
-    #         marker=go.scattergeo.Marker(
-    #         size = 10
-    #         ),
-    #         hoverinfo='text'
-    #     )
-    fig.update_layout(
-        mapbox_accesstoken = token,
-        #     mapbox_style="white-bg",
-        # mapbox_layers=[
-        #     {
-        #         "below": 'traces',
-        #         "sourcetype": "raster",
-        #         "sourceattribution": "United States Geological Survey",
-        #         "source": [
-        #             'mapbox://styles/srepho/cjttho6dl0hl91fmzwyicqkzf'
-                    # 'https://studio.mapbox.com/styles/gutyh/ckqw7altp313j17rw87vffyll/edit/#1.61/35.8/-126.1'
-                   # 'https://studio.mapbox.com/tilesets/gutyh.50i409dz/#2.28/26.94/30.06'
-                    # "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
-                # ]
-            # }]
-    )
-    fig.update_layout(
+    fig['data'][1]['showlegend']=True
+    fig['data'][1]['name']='Named Entity frequencies'
+    fig['data'][1]['legendgroup']= 'Frequencies'
 
+    fig.add_scattermapbox(
+            lat=df_battles['lat'],
+            lon=df_battles['lon'],
+            mode='markers',
+            hovertext = df_battles['txthover'],
+            # marker_symbol = 'star-stroked',
+            marker=go.scattermapbox.Marker(
+                size=15,
+                # color='rgb(255, 0, 0)',
+                color= df_battles['Duration'],
+                showscale = True,
+                colorscale='Blackbody_r',
+                opacity=0.7
+            ),
+            hoverinfo='text'
+        )
+
+    fig['data'][2]['name'] = 'Battles'
+
+    fig.update_layout(
+        autosize=True,
+        hovermode='closest',
+        legend=dict(
+            bgcolor='ivory',
+            bordercolor='lightgray',
+            borderwidth=1,
+            font = dict(color='black'),
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01),
+        mapbox_accesstoken=token,
         mapbox={
-            'style' :'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
-            # 'center': {'lon': -73.6, 'lat': 45.5},
-            'zoom': 0,
+            'style': 'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
+            'center': {'lon': 2.2137, 'lat': 46.2276},
+            'zoom': 3,
             # 'layers': [{
             #     'source':
             #     borderjson,
             #
             #     'type': "fill", 'below': "traces", 'color': "royalblue"}]
         },
-        margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+        margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
+
+    )
+
+    fig.add_choroplethmapbox(
+        bordersdf,
+        geojson=borderjson,
+        featureidkey='properties.cntry_name',
+        locationmode='geojson-id',
+        # geojson=borderjson,
+        locations='cntry_name',
+        # featureidkey='properties.cntry_name',
+        # color='cntry_name',
+        # color_continuous_scale="Viridis",
+    )
+
 
     # print(borderjson['objects']['countryborders'].keys())
     # fig.add_choropleth(
@@ -455,89 +485,6 @@ def get_map_plot():
     #     z = bordersdf['total_freq'],
     #     showscale=False
     # )
-
-    # fig.add_scattergeo(
-    #         lat=grp_map_df['lat'],
-    #         lon=grp_map_df['lon'],
-    #         mode='markers',
-    #         hovertext = grp_map_df['txthover'],
-    #         marker=go.scattergeo.Marker(
-    #             size=grp_map_df['freq'],
-    #             sizemode='area',
-    #             sizeref=grp_map_df['freq'].max() / 15 ** 2
-    #
-    #         ),
-    #         hoverinfo='text'
-    #     )
-
-    # fig['data'][1]['showlegend']=True
-    # fig['data'][1]['name']='Named Entity frequencies'
-    # fig['data'][1]['legendgroup']= 'Frequencies'
-
-    # ## Adds capital on the map
-    # fig.add_scattergeo(
-    #         lat=bordersdf['caplat'][:2],
-    #         lon=bordersdf['caplong'][:2],
-    #         mode='markers',
-    #         hovertext = bordersdf['capname'][:2],
-    #         marker_symbol = 'hexagon',
-    #         marker=go.scattergeo.Marker(
-    #         size = 10
-    #         ),
-    #         hoverinfo='text'
-    #     )
-    # fig['data'][2]['name'] = 'Capitals'
-
-    # Adding battle points
-    # fig.add_scattergeo(
-    #         lat=df_battles['lat'],
-    #         lon=df_battles['lon'],
-    #         mode='markers',
-    #         hovertext = df_battles['txthover'],
-    #         marker_symbol = 'star',
-    #         marker=go.scattergeo.Marker(
-    #             size=13,
-    #             # color='rgb(255, 0, 0)',
-    #             color= df_battles['Duration'],
-    #             showscale = True,
-    #             colorscale='Blackbody_r',
-    #             opacity=0.7
-    #         ),
-    #         hoverinfo='text'
-    #     )
-    # fig['data'][3]['name'] = 'Battles'
-    # fig.update_geos(
-    #     # resolution=50,
-    #     scope='world',
-    #     # showcoastlines=True, coastlinecolor="RebeccaPurple",
-    #     # showland=True, landcolor="LightGreen",
-    #     showocean=True, oceancolor="LightBlue",
-    #     showlakes=True, lakecolor="Blue",
-    #     showrivers=True, rivercolor="Blue",
-        # showcountries=True, countrycolor="RebeccaPurple"
-    # )
-    # fig.update_layout(
-    #     autosize=True,
-    #     hovermode='closest',
-    #     legend=dict(
-    #     bgcolor='ivory',
-    #     bordercolor='lightgray',
-    #     borderwidth=1,
-    #     font = dict(color='black'),
-    #     yanchor="top",
-    #     y=0.99,
-    #     xanchor="left",
-    #     x=0.01),
-    # dragmode='drawopenpath',
-    # newshape_line_color='cyan',
-
-    # title_text='Draw a path to separate versicolor and virginica',
-    # )
-    fig.update_yaxes(automargin=True)
-    fig.update_xaxes(automargin=True)
-
-
-
 
 
     return fig, map_df, grp_map_df, df_page
@@ -864,17 +811,57 @@ df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
 freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
 
 freqplot = pn.pane.Plotly(freq_fig)
+
+row_concordancer = pn.Row(table, pn.Column(csv_download, xlsx_download, json_download))
+row_freq = pn.Row(freqplot, pn.Column(freq_input, x_axis_select, freq_button))
+
 tabs = pn.Tabs(
     ('Warmap', map_panel),
     ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
                                                                   freq_input,
                                                                   x_axis_select,
                                                                   freq_button) )),
-    tabs_location='left',
+    # tabs_location='left',
     # dynamic=True
 )
 
 
+
+# template = """
+#
+# {% extends base %}
+#
+# {% block contents %}
+#
+# {{ app_title }}
+#
+# <div id="mySidebar" class="sidebar">
+#     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+#     {{ embed(roots.setting_col)}}
+# </div>
+#
+# <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
+# {{ embed(roots.setting_row)}}
+#
+# {{ embed(roots.tabs)}}
+#
+#
+# <script>
+# /* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
+# function openNav() {
+#   document.getElementById("mySidebar").style.width = "25em";
+#   document.getElementById("main").style.marginLeft = "25em";
+# }
+#
+# /* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
+# function closeNav() {
+#   document.getElementById("mySidebar").style.width = "0";
+#   document.getElementById("main").style.marginLeft = "0";
+# }
+#
+# </script>
+# {% endblock %}
+# """
 
 template = """
 
@@ -882,17 +869,40 @@ template = """
 
 {% block contents %}
 
-{{ app_title }}
 
+<div class="fixed_div">
+    <div class="headernav">SpaceWars</div>
+    <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
+<button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
+<button class="tablink" onclick="openPage('Metadata', this, 'blue')">Metadata</button>
+<button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
+</div>
 <div id="mySidebar" class="sidebar">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     {{ embed(roots.setting_col)}}
 </div>
 
 <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
-{{ embed(roots.setting_row)}}
+<div id="Warmap" class="tabcontent">
 
-{{ embed(roots.tabs)}}
+    {{ embed(roots.warmap)}}
+
+</div>
+
+<div id="Concordancer" class="tabcontent">
+        {{ embed(roots.row_table)}}
+        {{ embed(roots.row_freq)}}
+
+</div>
+
+<div id="Metadata" class="tabcontent">
+  <h3>Metadata</h3>
+  <p>Get in touch, or swing by for a cup of coffee.</p>
+</div>
+
+<div id="Tutorial" class="tabcontent">
+  <h3>Tutorial</h3>
+</div> 
 
 
 <script>
@@ -908,17 +918,44 @@ function closeNav() {
   document.getElementById("main").style.marginLeft = "0";
 }
 
+function openPage(pageName, elmnt, color) {
+  // Hide all elements with class="tabcontent" by default */
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  // Remove the background color of all tablinks/buttons
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].style.backgroundColor = "";
+  }
+
+  // Show the specific tab content
+  document.getElementById(pageName).style.display = "block";
+
+
+}
+
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click(); 
+
+
 </script>
 {% endblock %}
 """
+# {{ embed(roots.tabs)}}
 
-# div = plotly.io.to_html(warmap, full_html=False, include_plotlyjs=True)
-# div = div.replace('<div>', '<div id="warmap" class="tabcontent">')
 tmpl = pn.Template(template)
-tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
-tmpl.add_panel('tabs', tabs)
+# tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
+tmpl.add_panel('warmap', map_panel)
+tmpl.add_panel('row_table', row_concordancer)
+tmpl.add_panel('row_freq', row_freq)
+
+# tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
-tmpl.add_panel('setting_row', setting_row)
+# tmpl.add_panel('setting_row', setting_row)
 tmpl.servable()
 
 
