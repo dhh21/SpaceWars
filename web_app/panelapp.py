@@ -94,28 +94,6 @@ dic_news = {
     # "Neue Freie Presse": 'neue_freie_presse'
 }
 
-# script = """
-# <script>
-# function renderTable(){
-#   $('.example').DataTable( {
-#     dom: 'Bfrtip',
-#     buttons: [
-#         'copyHtml5',
-#         'excelHtml5',
-#         'csvHtml5',
-#         'pdfHtml5'
-#     ]
-# } );
-# }
-#
-# if (document.readyState === "complete") {
-#   renderTable()
-# } else {
-#   $(document).ready(renderTable);
-# }
-# </script>
-# """
-
 def get_window(text, window=5, left=True):
     """
     """
@@ -146,16 +124,24 @@ with open('config.json') as f:
     db_config = json.load(f)
     db_config = URL(**db_config)
 
+def get_countryborders():
+    borderjson = json.load(open('data/borders/countryborders.geojson'))
+    bordersdf = pd.read_csv('data/borders/countryborders.csv')
+
+    bordersdf['gwsdate'] = pd.to_datetime(bordersdf['gwsdate'])
+    bordersdf['gwsdate'] = bordersdf['gwsdate'].dt.strftime("%Y-%m-%d")
+
+    bordersdf['gwedate'] = pd.to_datetime(bordersdf['gwedate'])
+    bordersdf['gwedate'] = bordersdf['gwedate'].dt.strftime("%Y-%m-%d")
+
+    return borderjson, bordersdf
+
+
 # engine = create_engine('postgresql://postgres:spacewars@localhost:5432/spacewars')
 engine = create_engine(db_config, echo=True)
 
-# ## need to cast date column to str in order to use it with the animation frame
-# map_df['anim_date'] = map_df['anim_date'].astype(str)
-## TODO : NOT SO SURE ABOUT THAT ANYMORE
 
-## TODO : FILTER BODERS ACCORDING TO DATE AND CORRECT ISSUE WITH CAPITALS
-borderjson = json.load(open('data/borders/countryborders.geojson'))
-bordersdf = pd.read_csv('data/borders/countryborders.csv')
+borderjson, bordersdf = get_countryborders()
 
 #
 def execute_query(query, con):
@@ -214,6 +200,7 @@ end_date = pn.widgets.DatePicker(name='End Date',
                                  enabled_dates=widget_values['dates'],
                                  # todo: SET DEFAULT END VALUE TO 1915
                                  value=widget_values['dates'][150]
+                                 # value=widget_values['dates'][1000]
 
                                  # enabled_dates = list(map_df['date'].values),
                                    )
@@ -276,38 +263,23 @@ def get_battle_df(start_date, end_date, min_duration, max_duration, front_select
     df_battles = get_battle_hover_text(df_battles)
     return df_battles
 
-def get_country_borders(start_date, end_date):
+def filter_country_borders(start_date, end_date, list_country):
     """
      Collect the data from the database according the values of
     the widgets
     """
     start_date = str(start_date.value)
     end_date = str(end_date.value)
-    # end_date = f"{end_date}::date"
-    # args = (start_date, end_date)
-    # q = '''SELECT * from battles
-    # WHERE "displaydate" BETWEEN %s AND %s'''
-
-    # args = (end_date,)
-    # q = '''SELECT * from countryborders
-    # WHERE "gwsdate"::date <= %s::date'''
-    # bordersdf = read_sql_tmpfile(q, engine, args)
-    # bordersdf = bordersdf.groupby('cntry_name')
-    # bordersdf = bordersdf.first().reset_index()
-    # bordersdf.rename(columns={'cntry_name':'cntry_name'}, inplace=True)
-
-    # args = (end_date,)
-    # q = '''SELECT * from countryborders
-    # WHERE "gwsdate"::date <= %s::date'''
-    # bordersdf = read_sql_tmpfile(q, engine, args)
-    # bordersdf['freq_en'] =
-    # return bordersdf
 
     filtered_borders = bordersdf[
         (bordersdf['gwsdate'] <= end_date)
     ]
-    # return filtered_borders
-    return bordersdf
+
+    filtered_borders = filtered_borders[
+        filtered_borders['cntry_name'].isin(list_country)
+    ]
+    return filtered_borders
+    # return bordersdf[bordersdf['cntry_name'] == 'France']
 
 
 def get_map_df(lg, newspaper, start_date, end_date, context_window):
@@ -322,6 +294,30 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     start_date = str(start_date.value)
     end_date = str(end_date.value)
 
+    args = ( start_date, end_date, lg, newspaper)
+    q = '''select ent.geometry, ent.mention, ent.lon, ent.lat
+        from entities2 as ent
+        WHERE ent.index IN (
+            select ent.index
+            from entities2 as ent
+            INNER JOIN entities_date
+            ON ent.index = entities_date.id_geo
+            INNER JOIN dates
+            ON entities_date.id_date = dates.index
+            WHERE dates.date BETWEEN %s AND %s
+        )
+        AND ent.index IN (
+            select ent.index
+            from entities2 as ent
+            INNER JOIN entities_newspapers
+            ON ent.index = entities_newspapers.id_geo
+            INNER JOIN newspapers
+            ON entities_newspapers.id_newspaper = newspapers.index
+            WHERE newspapers.lang IN %s
+            AND newspapers.newspaper IN %s        )
+            '''
+    # ent_context =
+
     args = (lg, newspaper, start_date, end_date)
     q = '''SELECT * from entities
     WHERE "lang" IN %s
@@ -331,7 +327,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     map_df = read_sql_tmpfile(q, engine, args)
 
     map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
-    map_df['anim_date'] = map_df['date'].dt.strftime('%B-%Y')
+    # map_df['anim_date'] = map_df['date'].dt.strftime('%B-%Y')
     map_df['year'] = pd.DatetimeIndex(map_df['date']).year
     map_df['year'] = map_df['year'].astype(str)
     map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
@@ -363,13 +359,14 @@ def get_country_freq(map_df, borders_df):
 
     return borders_df
 
-
+token = open(".mapbox_token").read() # you will need your own token
+print(token)
 def get_map_plot():
 
 
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
-    bordersdf = get_country_borders(start_date, end_date)
+    bordersdf = filter_country_borders(start_date, end_date, map_df['mention'].unique())
 
     bordersdf = get_country_freq(map_df, bordersdf)
     bordersdf = get_borders_hover_text(bordersdf)
@@ -385,97 +382,162 @@ def get_map_plot():
 
     bordersdf['zero'] = 0
     fig = go.Figure()
-
-    fig.add_choropleth(
-        geojson=borderjson,
-        featureidkey='properties.cntry_name',
-        locationmode='geojson-id',
-        locations=bordersdf['cntry_name'],
-        hovertext=bordersdf['txthover'],
-        hoverinfo='text',
-        # z=bordersdf['zero'],
-        z = bordersdf['total_freq'],
-        showscale=False
+    fig = go.Figure(
+        go.Scattermapbox(
+        mode="markers",
+        lon=bordersdf['caplong'],
+        lat=bordersdf['caplat'],
+            marker={'size': 20, 'color': ["cyan"]})
     )
-    #
-    fig.add_scattergeo(
+    fig.add_scattermapbox(
             lat=grp_map_df['lat'],
             lon=grp_map_df['lon'],
             mode='markers',
             hovertext = grp_map_df['txthover'],
-            marker=go.scattergeo.Marker(
-                size=grp_map_df['freq'],
-                sizemode='area',
-                sizeref=grp_map_df['freq'].max() / 15 ** 2
-
-            ),
+            # marker=go.scattergeo.Marker(
+            #     size=grp_map_df['freq'],
+            #     sizemode='area',
+            #     sizeref=grp_map_df['freq'].max() / 15 ** 2
+            #
+            # ),
             hoverinfo='text'
         )
-
-    fig['data'][1]['showlegend']=True
-    fig['data'][1]['name']='Named Entity frequencies'
-    fig['data'][1]['legendgroup']= 'Frequencies'
-
-    # ## Adds capital on the map
-    fig.add_scattergeo(
-            lat=bordersdf['caplat'],
-            lon=bordersdf['caplong'],
-            mode='markers',
-            hovertext = bordersdf['capname'],
-            marker_symbol = 'hexagon',
-            marker=go.scattergeo.Marker(
-            size = 10
-            ),
-            hoverinfo='text'
-        )
-    fig['data'][2]['name'] = 'Capitals'
-
-    # Adding battle points
-    fig.add_scattergeo(
-            lat=df_battles['lat'],
-            lon=df_battles['lon'],
-            mode='markers',
-            hovertext = df_battles['txthover'],
-            marker_symbol = 'star',
-            marker=go.scattergeo.Marker(
-                size=13,
-                # color='rgb(255, 0, 0)',
-                color= df_battles['Duration'],
-                showscale = True,
-                colorscale='Blackbody_r',
-                opacity=0.7
-            ),
-            hoverinfo='text'
-        )
-    fig['data'][3]['name'] = 'Battles'
-    fig.update_geos(
-        # resolution=50,
-        scope='world',
-        showcoastlines=True, coastlinecolor="RebeccaPurple",
-        # showland=True, landcolor="LightGreen",
-        showocean=True, oceancolor="LightBlue",
-        showlakes=True, lakecolor="Blue",
-        showrivers=True, rivercolor="Blue"
+    # fig.add_scattergeo(
+    #         lat=bordersdf['caplat'],
+    #         lon=bordersdf['caplong'],
+    #         mode='markers',
+    #         hovertext = bordersdf['capname'],
+    #         marker_symbol = 'hexagon',
+    #         marker=go.scattergeo.Marker(
+    #         size = 10
+    #         ),
+    #         hoverinfo='text'
+    #     )
+    fig.update_layout(
+        mapbox_accesstoken = token,
+        #     mapbox_style="white-bg",
+        # mapbox_layers=[
+        #     {
+        #         "below": 'traces',
+        #         "sourcetype": "raster",
+        #         "sourceattribution": "United States Geological Survey",
+        #         "source": [
+        #             'mapbox://styles/srepho/cjttho6dl0hl91fmzwyicqkzf'
+                    # 'https://studio.mapbox.com/styles/gutyh/ckqw7altp313j17rw87vffyll/edit/#1.61/35.8/-126.1'
+                   # 'https://studio.mapbox.com/tilesets/gutyh.50i409dz/#2.28/26.94/30.06'
+                    # "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}"
+                # ]
+            # }]
     )
     fig.update_layout(
-        autosize=True,
-        hovermode='closest',
-        legend=dict(
-        bgcolor='ivory',
-        bordercolor='lightgray',
-        borderwidth=1,
-        font = dict(color='black'),
-        yanchor="top",
-        y=0.99,
-        xanchor="left",
-        x=0.01),
+
+        mapbox={
+            'style' :'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
+            # 'center': {'lon': -73.6, 'lat': 45.5},
+            'zoom': 0,
+            # 'layers': [{
+            #     'source':
+            #     borderjson,
+            #
+            #     'type': "fill", 'below': "traces", 'color': "royalblue"}]
+        },
+        margin={'l': 0, 'r': 0, 'b': 0, 't': 0})
+
+    # print(borderjson['objects']['countryborders'].keys())
+    # fig.add_choropleth(
+    #     geojson=borderjson,
+    #     featureidkey='properties.cntry_name',
+    #     locationmode='geojson-id',
+    #     locations=bordersdf['cntry_name'],
+    #     hovertext=bordersdf['txthover'],
+    #     hoverinfo='text',
+    #     # z=bordersdf['zero'],
+    #     z = bordersdf['total_freq'],
+    #     showscale=False
+    # )
+
+    # fig.add_scattergeo(
+    #         lat=grp_map_df['lat'],
+    #         lon=grp_map_df['lon'],
+    #         mode='markers',
+    #         hovertext = grp_map_df['txthover'],
+    #         marker=go.scattergeo.Marker(
+    #             size=grp_map_df['freq'],
+    #             sizemode='area',
+    #             sizeref=grp_map_df['freq'].max() / 15 ** 2
+    #
+    #         ),
+    #         hoverinfo='text'
+    #     )
+
+    # fig['data'][1]['showlegend']=True
+    # fig['data'][1]['name']='Named Entity frequencies'
+    # fig['data'][1]['legendgroup']= 'Frequencies'
+
+    # ## Adds capital on the map
+    # fig.add_scattergeo(
+    #         lat=bordersdf['caplat'][:2],
+    #         lon=bordersdf['caplong'][:2],
+    #         mode='markers',
+    #         hovertext = bordersdf['capname'][:2],
+    #         marker_symbol = 'hexagon',
+    #         marker=go.scattergeo.Marker(
+    #         size = 10
+    #         ),
+    #         hoverinfo='text'
+    #     )
+    # fig['data'][2]['name'] = 'Capitals'
+
+    # Adding battle points
+    # fig.add_scattergeo(
+    #         lat=df_battles['lat'],
+    #         lon=df_battles['lon'],
+    #         mode='markers',
+    #         hovertext = df_battles['txthover'],
+    #         marker_symbol = 'star',
+    #         marker=go.scattergeo.Marker(
+    #             size=13,
+    #             # color='rgb(255, 0, 0)',
+    #             color= df_battles['Duration'],
+    #             showscale = True,
+    #             colorscale='Blackbody_r',
+    #             opacity=0.7
+    #         ),
+    #         hoverinfo='text'
+    #     )
+    # fig['data'][3]['name'] = 'Battles'
+    # fig.update_geos(
+    #     # resolution=50,
+    #     scope='world',
+    #     # showcoastlines=True, coastlinecolor="RebeccaPurple",
+    #     # showland=True, landcolor="LightGreen",
+    #     showocean=True, oceancolor="LightBlue",
+    #     showlakes=True, lakecolor="Blue",
+    #     showrivers=True, rivercolor="Blue",
+        # showcountries=True, countrycolor="RebeccaPurple"
+    # )
+    # fig.update_layout(
+    #     autosize=True,
+    #     hovermode='closest',
+    #     legend=dict(
+    #     bgcolor='ivory',
+    #     bordercolor='lightgray',
+    #     borderwidth=1,
+    #     font = dict(color='black'),
+    #     yanchor="top",
+    #     y=0.99,
+    #     xanchor="left",
+    #     x=0.01),
     # dragmode='drawopenpath',
     # newshape_line_color='cyan',
 
     # title_text='Draw a path to separate versicolor and virginica',
-    )
+    # )
     fig.update_yaxes(automargin=True)
     fig.update_xaxes(automargin=True)
+
+
+
 
 
     return fig, map_df, grp_map_df, df_page
@@ -567,7 +629,7 @@ def update_country_borders(event):
     """
 
     """
-    bordersdf = get_country_borders(start_date, end_date)
+    bordersdf = filter_country_borders(start_date, end_date)
     bordersmap = warmap['data'][0]
     bordersmap['locations'] = bordersdf['cntry_name']
     bordersmap['hovertext'] = bordersdf['txthover']
@@ -625,7 +687,7 @@ def clear_concordancer(event):
 
 warmap, map_df, grp_map_df, df_page = get_map_plot()
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
-                                value = '1'
+                                value = '100'
                                 )
 max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = map_df['freq'].max().astype('str')
@@ -682,22 +744,17 @@ setting_row = pn.Row('### Options',
             )
 
 plot_config = {
+    # 'topojsonURL':'http://127.0.0.1:5000/data/',
     "responsive": True,
     "displaylogo": False,
     "displayModeBar": True,
     'toImageButtonOptions': {'height': None, 'width': None, },
     ## TODO: ADD DRAWING TOOLS BUT DOESNT SEEM TO WORK ON MAPS
-    # 'modeBarButtonsToAdd':['drawline',
-    #                         'drawopenpath',
-    #                         'drawclosedpath',
-    #                         'drawcircle',
-    #                         'drawrect',
-    #                         'eraseshape'
-    #                                    ]
+
 }
 
 map_panel = pn.pane.Plotly(warmap,
-                           config=plot_config
+                           config=plot_config,
                            )
 
 @pn.depends(map_panel.param.click_data, watch=True)
@@ -788,7 +845,7 @@ def update_freq_plot(event):
     freqplot.object = new_freq_fig
 
 
-freq_input = pn.widgets.TextInput(name = 'Keyword(s):', value='France,Allemagne,Vienne')
+freq_input = pn.widgets.TextInput(name = 'Keyword(s):', value='France,Deutschland,Suomi')
 
 x_axis_select = pn.widgets.Select(name='Select', options=['date', 'newspaper', 'lang'], value='date')
 
@@ -863,6 +920,8 @@ tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
 tmpl.add_panel('setting_row', setting_row)
 tmpl.servable()
+
+
 
 # df_freq = map_df[['mention', 'date']]
 # df_freq['year-month'] = pd.to_datetime(df_freq['date']).dt.to_period('M')
