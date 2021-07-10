@@ -82,8 +82,8 @@ body, html {
   outline: none;
   cursor: pointer;
   padding: 14px 16px;
-  font-size: 17px;
-  width: 25%;
+  font-size: 18px;
+  width: 18%;
 
 }
 
@@ -95,7 +95,7 @@ body, html {
   outline: none;
   cursor: pointer;
   padding: 14px 16px;
-  font-size: 20px;
+  font-size: 18px;
   width: 10%;
 
 }
@@ -108,12 +108,35 @@ body, html {
 .tabcontent {
   color: white;
   display: none;
-  padding: 100px 20px;
+  padding-top: 10px;
   height: 100%;
 }
 
 .fixed_div {
-      position:fixed;
+    position:fixed;
     top:0;
     width:100%;
-    z-index:100;}
+    z-index:100;
+    }
+
+.pop_up {
+    background-color: red;
+    position:fixed;
+    z-index:100;
+}
+
+ .column {
+  float: left;
+  width: 50%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.table_col {
+    width: 50%;
+}

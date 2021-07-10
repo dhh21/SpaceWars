@@ -752,8 +752,6 @@ def update_on_click(click_data):
         y=0.85,
         xanchor="left",
         x=0.01,
-        # xref='x',
-        # yref='y',
         align='left',
         showarrow=True,
         bgcolor = 'ivory',
@@ -773,7 +771,7 @@ def update_table(df, pattern):
 
 table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
                              pagination='remote', page_size=10,
-                             # configuration={'initialHeaderFilter': [{'field': 'mention', 'value':'FRANCE'}]}
+                             configuration={'responsiveLayout': 'hide'}
                              )
 
 def download_as_csv():
@@ -909,15 +907,21 @@ template = """
 
 {% extends base %}
 
+{% block postamble %}
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+{% endblock %}
+
 {% block contents %}
 
 
 <div class="fixed_div">
-    <div class="headernav">SpaceWars</div>
+    <button class="headernav"">SpaceWars</button>
     <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
     <button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
     <button class="tablink" onclick="openPage('Metadata', this, 'blue')">Metadata</button>
     <button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
+    <button class="tablink" onclick="openPage('Data', this, 'orange')">Data</button>
+
 </div>
 <div id="mySidebar" class="sidebar">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
@@ -931,8 +935,29 @@ template = """
 </div>
 
 <div id="Concordancer" class="tabcontent">
+
+ <div class="row">
+  <div class="table_col">
         {{ embed(roots.row_table)}}
+  
+  </div>
+  <div class="column">
         {{ embed(roots.row_freq)}}
+  
+  </div>
+</div> 
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-lg-7">
+        {{ embed(roots.row_table)}}
+    </div>
+    <div class="col-lg-5">
+        {{ embed(roots.row_freq)}}
+    </div>
+  </div>
+</div>
+
 
 </div>
 
@@ -942,7 +967,11 @@ template = """
 </div>
 
 <div id="Tutorial" class="tabcontent">
-  <h3>Tutorial</h3>
+ADD VIDEOS 
+</div>
+
+<div id="Data" class="tabcontent">
+        {{ embed(roots.settings)}}
 </div> 
 
 
@@ -991,14 +1020,17 @@ document.getElementById("defaultOpen").click();
 tmpl = pn.Template(template)
 # tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('warmap', map_panel)
-tmpl.add_panel('row_table', row_concordancer)
-tmpl.add_panel('row_freq', row_freq)
+tmpl.add_panel('row_table', table)
+tmpl.add_panel('row_freq', freqplot)
+
+# tmpl.add_panel('row_table', row_concordancer)
+# tmpl.add_panel('row_freq', row_freq)
 # tmpl.add_panel('entities', entity_display)
 
 
 # tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
-# tmpl.add_panel('setting_row', setting_row)
+tmpl.add_panel('settings', setting_row)
 tmpl.servable()
 
 
