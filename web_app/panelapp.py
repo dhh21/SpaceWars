@@ -220,7 +220,9 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
 
 # empty at first, display data about entity when clicked on it
 ## TODO: DISPLAY DATA ABOUT CAPITALS AND BATTLES AS WELL ?
-entity_display = pn.pane.Markdown("",)
+# entity_display = pn.pane.Markdown("",)
+# entity_display = pn.pane.HTML()
+
 
 context_window = pn.widgets.TextInput(name='Window of word:', placeholder = 'Enter a value here ...',
                                 value = str(5)
@@ -444,7 +446,8 @@ def get_map_plot():
             yanchor="top",
             y=0.99,
             xanchor="left",
-            x=0.01),
+            x=0.01
+        ),
         mapbox_accesstoken=token,
         mapbox={
             'style': 'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
@@ -456,21 +459,41 @@ def get_map_plot():
             #
             #     'type': "fill", 'below': "traces", 'color': "royalblue"}]
         },
-        margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
+        margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
+        updatemenus=[
+            dict(
+                type='buttons',
+                active=0,
+                buttons=[
+                    dict(label='Clear annotations',
+                         method='update',
+                         args=[
+                             {'visible':[True, True, False, False]},
+                             {'annotations':[]}
+                         ]
+                         # args=['annotations', []]
+                         )
+                ],
+                xanchor='left',
+                yanchor='top',
+                x=0,
+                y=1.05
+            )
+        ]
 
     )
-
-    fig.add_choroplethmapbox(
-        bordersdf,
-        geojson=borderjson,
-        featureidkey='properties.cntry_name',
-        locationmode='geojson-id',
-        # geojson=borderjson,
-        locations='cntry_name',
-        # featureidkey='properties.cntry_name',
-        # color='cntry_name',
-        # color_continuous_scale="Viridis",
-    )
+    #
+    # fig.add_choroplethmapbox(
+    #     bordersdf,
+    #     geojson=borderjson,
+    #     featureidkey='properties.cntry_name',
+    #     locationmode='geojson-id',
+    #     # geojson=borderjson,
+    #     locations='cntry_name',
+    #     # featureidkey='properties.cntry_name',
+    #     # color='cntry_name',
+    #     # color_continuous_scale="Viridis",
+    # )
 
 
     # print(borderjson['objects']['countryborders'].keys())
@@ -629,7 +652,7 @@ def clear_concordancer(event):
     """
 
     search_bar.value = ''
-    entity_display.object = ''
+    # entity_display.object = ''
     table.value = df_page
 
 warmap, map_df, grp_map_df, df_page = get_map_plot()
@@ -687,7 +710,7 @@ setting_row = pn.Row('### Options',
             pn.Column(start_date, end_date, min_freq, max_freq),
             pn.Column(front_selection, min_duration, max_duration),
             pn.Column(context_window, search_bar, clear_button, case_checkbox),
-            entity_display,
+            # entity_display,
             )
 
 plot_config = {
@@ -710,10 +733,9 @@ def update_on_click(click_data):
     print(point)
     pointindex = point['pointIndex']
     entity_data = grp_map_df.iloc[pointindex]
-    print(entity_data)
-    print(map_df.loc[pointindex])
 
-    md_template = f"""<b>Entity</b>:{entity_data['mention']}<br>
+
+    md_template = f"""     <b>Entity</b>: {entity_data['mention']}<br>
     <b>Newspaper</b>: {entity_data['newspaper']}<br>
     <b>Language</b>: {entity_data['lang']}<br>
     <b>Date</b>: {entity_data['date'].strftime("%d %B %Y")}<br>
@@ -721,8 +743,28 @@ def update_on_click(click_data):
     <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
     <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
 
-    entity_display.object = md_template
-    search_bar.value = entity_data['mention']
+    #clears previous annotations
+    warmap['layout']['annotations'] = ()
+
+    warmap.add_annotation(
+        text = md_template,
+        yanchor="top",
+        y=0.85,
+        xanchor="left",
+        x=0.01,
+        # xref='x',
+        # yref='y',
+        align='left',
+        showarrow=True,
+        bgcolor = 'ivory',
+        bordercolor = 'lightgray',
+        borderwidth = 1,
+        font = dict(color='black'),
+
+    )
+
+
+    # search_bar.value = entity_data['mention']
 
 def update_table(df, pattern):
 
@@ -873,15 +915,14 @@ template = """
 <div class="fixed_div">
     <div class="headernav">SpaceWars</div>
     <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
-<button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
-<button class="tablink" onclick="openPage('Metadata', this, 'blue')">Metadata</button>
-<button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
+    <button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
+    <button class="tablink" onclick="openPage('Metadata', this, 'blue')">Metadata</button>
+    <button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
 </div>
 <div id="mySidebar" class="sidebar">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     {{ embed(roots.setting_col)}}
 </div>
-
 <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
 <div id="Warmap" class="tabcontent">
 
@@ -952,6 +993,8 @@ tmpl = pn.Template(template)
 tmpl.add_panel('warmap', map_panel)
 tmpl.add_panel('row_table', row_concordancer)
 tmpl.add_panel('row_freq', row_freq)
+# tmpl.add_panel('entities', entity_display)
+
 
 # tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
