@@ -33,7 +33,7 @@ epsg = 4326
 pn.extension()
 pn.extension(css_files=css, js_files=js)
 pn.extension("plotly")
-# pn.config.sizing_mode = "stretch_width"
+# pn.config.sizing_mode = "stretch_both"
 
 def get_battle_hover_text(battles):
     """
@@ -292,33 +292,32 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     lg = [f"{dic_lg[x]}" for x in lg.value]
     lg = tuple(lg)
     newspaper = tuple([f"{x}" for x in newspaper.value])
+    args = (lg, newspaper)
+    q = '''SELECT DISTINCT ent.id_ent, newspapers.newspaper, newspapers.lang
+    FROM entities2 as ent
+    INNER JOIN entities_newspapers
+    ON ent.id_ent = entities_newspapers.id_ent
+    INNER JOIN newspapers
+    ON entities_newspapers.id_newspaper = newspapers.id_newspaper
+    WHERE newspapers.lang in %s
+    AND newspapers.newspaper in %s
+    '''
+    ent_news = read_sql_tmpfile(q, engine, args)
+    print('NEWS', ent_news)
 
     start_date = str(start_date.value)
     end_date = str(end_date.value)
-
-    args = ( start_date, end_date, lg, newspaper)
-    q = '''select ent.geometry, ent.mention, ent.lon, ent.lat
-        from entities2 as ent
-        WHERE ent.index IN (
-            select ent.index
-            from entities2 as ent
-            INNER JOIN entities_date
-            ON ent.index = entities_date.id_geo
-            INNER JOIN dates
-            ON entities_date.id_date = dates.index
-            WHERE dates.date BETWEEN %s AND %s
-        )
-        AND ent.index IN (
-            select ent.index
-            from entities2 as ent
-            INNER JOIN entities_newspapers
-            ON ent.index = entities_newspapers.id_geo
-            INNER JOIN newspapers
-            ON entities_newspapers.id_newspaper = newspapers.index
-            WHERE newspapers.lang IN %s
-            AND newspapers.newspaper IN %s        )
-            '''
-    # ent_context =
+    args = (start_date, end_date)
+    q = '''SELECT DISTINCT ent.id_ent, dates.id_date
+    FROM entities2 as ent
+    INNER JOIN entities_date
+    ON ent.id_ent = entities_date.id_ent
+    INNER JOIN dates
+    ON entities_date.id_date = dates.id_date
+    WHERE dates.date BETWEEN %s AND %s
+    '''
+    ent_dates = read_sql_tmpfile(q, engine, args)
+    print('DATES', ent_dates)
 
     args = (lg, newspaper, start_date, end_date)
     q = '''SELECT * from entities
@@ -703,15 +702,7 @@ setting_col = pn.WidgetBox('### Options',
               min_freq, max_freq,
             min_duration, max_duration,
             front_selection,
-           search_bar)
-
-setting_row = pn.Row('### Options',
-            pn.Column(lg_select, newspapers_select),
-            pn.Column(start_date, end_date, min_freq, max_freq),
-            pn.Column(front_selection, min_duration, max_duration),
-            pn.Column(context_window, search_bar, clear_button, case_checkbox),
-            # entity_display,
-            )
+                           )
 
 plot_config = {
     # 'topojsonURL':'http://127.0.0.1:5000/data/',
@@ -834,8 +825,9 @@ col_table = pn.Card(
                              xlsx_download,
                              json_download,
                             title='Concordancer',
-    button_css_classes=['card_layout'],
-    collapsible = False
+                            button_css_classes=['card_layout'],
+                            collapsible = False,
+                            sizing_mode = 'stretch_both'
 
                              )
 
@@ -874,8 +866,16 @@ df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(na
 df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
 
 freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+freq_fig.update_layout(legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01
+))
+freq_fig.update_yaxes(automargin=True)
+freq_fig.update_xaxes(automargin=True)
 
-freqplot = pn.pane.Plotly(freq_fig)
+freqplot = pn.pane.Plotly(freq_fig, config={'responsive': True})
 
 row_concordancer = pn.Row(table, pn.Column(csv_download, xlsx_download, json_download))
 row_freq = pn.Row(freqplot, pn.Column(freq_input, x_axis_select, freq_button))
@@ -893,25 +893,10 @@ col_freq = pn.Card(freq_input,
                 freqplot,
                    title= 'Occurrences',
                    button_css_classes = ['card_layout'],
-                   collapsible=False
+                   collapsible=False,
+sizing_mode = 'stretch_both'
 
-                   )
-
-
-# tabs = pn.Tabs(
-#     ('Warmap', map_panel),
-#     ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
-#                                                                   freq_input,
-#                                                                   x_axis_select,
-#                                                                   freq_button) )),
-    # tabs_location='left',
-    # dynamic=True
-# )
-# name='Newspapers',
-#                                            value =
-#                                            # ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
-#                                            ['Le Matin'],
-#
+)
 
 newspapers_select_2 = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
@@ -929,11 +914,6 @@ end_date_2 = pn.widgets.DatePicker(name='End Date',
 
                                    )
 
-# col_metadata = pn.Column('# Newspapers',
-#                             newspapers_select_2,
-#                             start_date_2,
-#                             end_date_2,
-#                             freqplot)
 col_metadata = pn.Card(
                             newspapers_select_2,
                             start_date_2,
@@ -941,7 +921,8 @@ col_metadata = pn.Card(
                             freqplot,
                             title='Newspapers',
     button_css_classes=['card_layout'],
-    collapsible=False
+    collapsible=False,
+sizing_mode = 'stretch_both'
 
 )
 
@@ -957,43 +938,47 @@ template = """
 
 
 <div class="fixed_div">
-    <button class="headernav"">SpaceWars</button>
+    <button class="headernav">SpaceWars</button>
+     <div class="dropdown">
+      <button onclick="myFunction()" class="dropbtn">Select data <i class="fa fa-caret-down"></i></button>
+      <div id="myDropdown" class="dropdown-content">
+        {{ embed(roots.setting_col)}} 
+      </div>
+    </div> 
     <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
     <button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
-    <button class="tablink" onclick="openPage('Metadata', this, 'blue')">Metadata</button>
     <button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
-    <button class="tablink" onclick="openPage('Data', this, 'orange')">Data</button>
 
 </div>
-<div id="mySidebar" class="sidebar">
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    {{ embed(roots.setting_col)}}
-</div>
-<button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
+
 <div id="Warmap" class="tabcontent">
-
     {{ embed(roots.warmap)}}
-
 </div>
 
 <div id="Concordancer" class="tabcontent">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-4">
+                  {{ embed(roots.table)}}
+            </div>
+            <div class="col-lg-4">
+                  {{ embed(roots.freq)}}
+        
+            </div>
+            <div class="col-lg-4">
+                  {{ embed(roots.news)}}
+        
+            </div>
+        </div>
+    </div>
 
-    {{ embed(roots.conc)}}
-
-</div>
-
-<div id="Metadata" class="tabcontent">
-  <h3>Metadata</h3>
-  <p>Get in touch, or swing by for a cup of coffee.</p>
 </div>
 
 <div id="Tutorial" class="tabcontent">
-ADD VIDEOS 
+ADD VIDEOS
+
 </div>
 
-<div id="Data" class="tabcontent">
-        {{ embed(roots.settings)}}
-</div> 
 
 
 <script>
@@ -1025,25 +1010,48 @@ function openPage(pageName, elmnt, color) {
 
   // Show the specific tab content
   document.getElementById(pageName).style.display = "block";
-
-
+  
+  
+  // Add the specific color to the button used to open the tab content
+  elmnt.style.backgroundColor = "#2980B9";
 }
 
 // Get the element with id="defaultOpen" and click on it
 document.getElementById("defaultOpen").click(); 
 
+/* When the user clicks on the button,
+toggle between hiding and showing the dropdown content */
+function myFunction() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
 
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+} 
 </script>
 {% endblock %}
 """
 # {{ embed(roots.tabs)}}
-
+#     {{ embed(roots.warmap)}}
 # conc_panel = pn.Row(col_table, col_freq, col_metadata)
-conc_panel = pn.Row(col_table, col_freq, col_metadata)
+conc_panel = pn.Row(col_table, col_freq, col_metadata, )
 tmpl = pn.Template(template)
-# tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
+tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('warmap', map_panel)
-tmpl.add_panel('conc', conc_panel)
+tmpl.add_panel('table', col_table)
+tmpl.add_panel('freq', col_freq)
+tmpl.add_panel('news', col_metadata)
+
 
 # tmpl.add_panel('row_table', row_concordancer)
 # tmpl.add_panel('row_freq', row_freq)
@@ -1052,7 +1060,7 @@ tmpl.add_panel('conc', conc_panel)
 
 # tmpl.add_panel('tabs', tabs)
 tmpl.add_panel('setting_col', setting_col)
-tmpl.add_panel('settings', setting_row)
+# tmpl.add_panel('settings', setting_row)
 tmpl.servable()
 
 
