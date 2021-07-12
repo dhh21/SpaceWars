@@ -771,7 +771,7 @@ def update_table(df, pattern):
 
 table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
                              pagination='remote', page_size=10,
-                             configuration={'responsiveLayout': 'hide'}
+                             # configuration={'responsiveLayout': 'hide'}
                              )
 
 def download_as_csv():
@@ -813,6 +813,31 @@ table.add_filter(pn.bind(update_table, pattern=context_window))
 table.add_filter(pn.bind(update_table, pattern=search_bar))
 table.add_filter(pn.bind(update_table, pattern=clear_button))
 
+# col_table = pn.Column('# Concordancer',
+#                              search_bar,
+#                              case_checkbox,
+#                              clear_button,
+#                              context_window,
+#                              table,
+#                              csv_download,
+#                              xlsx_download,
+#                              json_download
+#
+#                              )
+col_table = pn.Card(
+                             search_bar,
+                             case_checkbox,
+                             clear_button,
+                             context_window,
+                             table,
+                             csv_download,
+                             xlsx_download,
+                             json_download,
+                            title='Concordancer',
+    button_css_classes=['card_layout'],
+    collapsible = False
+
+                             )
 
 def update_freq_plot(event):
     """
@@ -855,53 +880,70 @@ freqplot = pn.pane.Plotly(freq_fig)
 row_concordancer = pn.Row(table, pn.Column(csv_download, xlsx_download, json_download))
 row_freq = pn.Row(freqplot, pn.Column(freq_input, x_axis_select, freq_button))
 
-tabs = pn.Tabs(
-    ('Warmap', map_panel),
-    ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
-                                                                  freq_input,
-                                                                  x_axis_select,
-                                                                  freq_button) )),
+# col_freq = pn.Column('# Occurrences',
+#                  freq_input,
+#                  x_axis_select,
+#                  freq_button,
+#                 freqplot
+#                         )
+
+col_freq = pn.Card(freq_input,
+                 x_axis_select,
+                 freq_button,
+                freqplot,
+                   title= 'Occurrences',
+                   button_css_classes = ['card_layout'],
+                   collapsible=False
+
+                   )
+
+
+# tabs = pn.Tabs(
+#     ('Warmap', map_panel),
+#     ('Concordancer', pn.Row(pn.Column(table, freqplot), pn.Column(csv_download, xlsx_download, json_download,
+#                                                                   freq_input,
+#                                                                   x_axis_select,
+#                                                                   freq_button) )),
     # tabs_location='left',
     # dynamic=True
+# )
+# name='Newspapers',
+#                                            value =
+#                                            # ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
+#                                            ['Le Matin'],
+#
+
+newspapers_select_2 = pn.widgets.MultiSelect(name='Newspapers',
+                                           value =
+                                           ['Le Matin'],
+
+                                            options= list(dic_news.keys()))
+start_date_2 = pn.widgets.DatePicker(name='Start Date',
+                                   enabled_dates = widget_values['dates'],
+                                   value=start_date.value
+                                   )
+end_date_2 = pn.widgets.DatePicker(name='End Date',
+                                 enabled_dates=widget_values['dates'],
+                                 # todo: SET DEFAULT END VALUE TO 1915
+                                 value=end_date.value
+
+                                   )
+
+# col_metadata = pn.Column('# Newspapers',
+#                             newspapers_select_2,
+#                             start_date_2,
+#                             end_date_2,
+#                             freqplot)
+col_metadata = pn.Card(
+                            newspapers_select_2,
+                            start_date_2,
+                            end_date_2,
+                            freqplot,
+                            title='Newspapers',
+    button_css_classes=['card_layout'],
+    collapsible=False
+
 )
-
-
-
-# template = """
-#
-# {% extends base %}
-#
-# {% block contents %}
-#
-# {{ app_title }}
-#
-# <div id="mySidebar" class="sidebar">
-#     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-#     {{ embed(roots.setting_col)}}
-# </div>
-#
-# <button class="openbtn" onclick="openNav()">&#9776; Open Sidebar</button>
-# {{ embed(roots.setting_row)}}
-#
-# {{ embed(roots.tabs)}}
-#
-#
-# <script>
-# /* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
-# function openNav() {
-#   document.getElementById("mySidebar").style.width = "25em";
-#   document.getElementById("main").style.marginLeft = "25em";
-# }
-#
-# /* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
-# function closeNav() {
-#   document.getElementById("mySidebar").style.width = "0";
-#   document.getElementById("main").style.marginLeft = "0";
-# }
-#
-# </script>
-# {% endblock %}
-# """
 
 template = """
 
@@ -936,28 +978,7 @@ template = """
 
 <div id="Concordancer" class="tabcontent">
 
- <div class="row">
-  <div class="table_col">
-        {{ embed(roots.row_table)}}
-  
-  </div>
-  <div class="column">
-        {{ embed(roots.row_freq)}}
-  
-  </div>
-</div> 
-
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-lg-7">
-        {{ embed(roots.row_table)}}
-    </div>
-    <div class="col-lg-5">
-        {{ embed(roots.row_freq)}}
-    </div>
-  </div>
-</div>
-
+    {{ embed(roots.conc)}}
 
 </div>
 
@@ -1017,11 +1038,12 @@ document.getElementById("defaultOpen").click();
 """
 # {{ embed(roots.tabs)}}
 
+# conc_panel = pn.Row(col_table, col_freq, col_metadata)
+conc_panel = pn.Row(col_table, col_freq, col_metadata)
 tmpl = pn.Template(template)
 # tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('warmap', map_panel)
-tmpl.add_panel('row_table', table)
-tmpl.add_panel('row_freq', freqplot)
+tmpl.add_panel('conc', conc_panel)
 
 # tmpl.add_panel('row_table', row_concordancer)
 # tmpl.add_panel('row_freq', row_freq)
