@@ -292,7 +292,9 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     lg = [f"{dic_lg[x]}" for x in lg.value]
     lg = tuple(lg)
     newspaper = tuple([f"{x}" for x in newspaper.value])
+
     args = (lg, newspaper)
+
     q = '''SELECT DISTINCT ent.id_ent, newspapers.newspaper, newspapers.lang
     FROM entities2 as ent
     INNER JOIN entities_newspapers
@@ -303,12 +305,11 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     AND newspapers.newspaper in %s
     '''
     ent_news = read_sql_tmpfile(q, engine, args)
-    print('NEWS', ent_news)
 
     start_date = str(start_date.value)
     end_date = str(end_date.value)
     args = (start_date, end_date)
-    q = '''SELECT DISTINCT ent.id_ent, dates.id_date
+    q = '''SELECT DISTINCT ent.id_ent, dates.date
     FROM entities2 as ent
     INNER JOIN entities_date
     ON ent.id_ent = entities_date.id_ent
@@ -317,33 +318,68 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     WHERE dates.date BETWEEN %s AND %s
     '''
     ent_dates = read_sql_tmpfile(q, engine, args)
-    print('DATES', ent_dates)
 
-    args = (lg, newspaper, start_date, end_date)
-    q = '''SELECT * from entities
-    WHERE "lang" IN %s
-    AND "newspaper" IN %s
-    AND "date" BETWEEN %s AND %s
-    '''
-    map_df = read_sql_tmpfile(q, engine, args)
+    # # print('DATES', ent_dates)
+    #
+    merge_df = ent_news.merge(ent_dates, left_on='id_ent', right_on='id_ent')
+    ent_id = tuple(merge_df['id_ent'].unique().tolist())
+    args = (ent_id,)
+    q = '''SELECT DISTINCT ent.id_ent, ent.geometry, ent.lat, ent.lon, ent.mention, ent.wikidata_link, ent.article_link
+        FROM entities2 as ent
+        WHERE ent.id_ent IN %s
+        '''
+    ent_df = read_sql_tmpfile(q, engine, args)
+    map_df = ent_df.merge(merge_df, left_on = 'id_ent', right_on='id_ent')
+
+    # merge_df['id_ent'] = merge_df['id_ent'].astype(str)
+
+    # print(df_page)
+    # # print(merge_df)
+    # args = (lg, newspaper, start_date, end_date)
+    # q = '''SELECT * from entities
+    # WHERE "lang" IN %s
+    # AND "newspaper" IN %s
+    # AND "date" BETWEEN %s AND %s
+    # '''
+    # map_df = read_sql_tmpfile(q, engine, args)
 
     map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
     # map_df['anim_date'] = map_df['date'].dt.strftime('%B-%Y')
     map_df['year'] = pd.DatetimeIndex(map_df['date']).year
     map_df['year'] = map_df['year'].astype(str)
     map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
-    context_window = int(context_window.value)
     map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
     map_df['wikidata_link'] = map_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
-
-    # geo_df['date'] = pd.DatetimeIndex(geo_df['date']).strftime("%Y-%m-%d")
-    map_df['context_word_window'] = context_window
-    map_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, context_window))
-    map_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, context_window, left=False))
     map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
     map_df = get_entities_hover_text(map_df)
 
     return map_df
+
+def get_df_page(map_df, context_window):
+    """
+
+    """
+    ent_id = tuple(map_df['id_ent'].unique().tolist())
+    ent_id = ent_id[:50]
+    # print(type(ent_id[0]))
+    args = (ent_id,)
+    q = '''SELECT DISTINCT ent.id_ent, ent.mention,
+    context.left_context, context.right_context
+    FROM entities2 as ent
+    INNER JOIN entities_context
+    ON ent.id_ent = entities_context.id_ent
+    INNER JOIN context
+    ON entities_context.id_context = context.id_context
+    WHERE ent.id_ent IN %s
+    '''
+    df_page = read_sql_tmpfile(q, engine, args)
+    context_window = int(context_window.value)
+    # geo_df['date'] = pd.DatetimeIndex(geo_df['date']).strftime("%Y-%m-%d")
+    df_page['context_word_window'] = context_window
+    df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, context_window))
+    df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, context_window, left=False))
+    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    return df_page
 
 def get_country_freq(map_df, borders_df):
     """
@@ -374,8 +410,10 @@ def get_map_plot():
     bordersdf = bordersdf.first().reset_index()
     bordersdf.rename(columns={'index':'cntry_name'}, inplace=True)
 
-    df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
+    # df_page = map_df[['window_left_context', 'mention', 'window_right_context']]
+    df_page = get_df_page(map_df, context_window)
 
+    # print(map_df['geometry'])
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
