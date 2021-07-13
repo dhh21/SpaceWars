@@ -10,6 +10,7 @@ from datetime import datetime
 from sqlalchemy.engine.url import URL
 import re
 from io import StringIO
+from bokeh.models.widgets.tables import HTMLTemplateFormatter, StringFormatter
 
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
@@ -178,15 +179,15 @@ widget_values = get_widget_values()
 
 lg_select = pn.widgets.MultiSelect(name= 'Language Selection',
                                    value =
-                                   # ['French', 'German', 'Finnish'],
+                                   ['French', 'German', 'Finnish'],
                                    # list(dic_lg.keys()),
-                                   ['French'],
+                                   # ['French'],
                                     options = list(dic_lg.keys()))
 
 newspapers_select = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
-                                           # ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
-                                           ['Le Matin'],
+                                           ['Arbeiter Zeitung', 'Helsingin Sanomat', 'Le Matin'],
+                                           # ['Le Matin'],
 
                                             options= list(dic_news.keys()))
 
@@ -199,8 +200,8 @@ start_date = pn.widgets.DatePicker(name='Start Date',
 end_date = pn.widgets.DatePicker(name='End Date',
                                  enabled_dates=widget_values['dates'],
                                  # todo: SET DEFAULT END VALUE TO 1915
-                                 value=widget_values['dates'][100]
-                                 # value=widget_values['dates'][1000]
+                                 # value=widget_values['dates'][100]
+                                 value=widget_values['dates'][1000]
 
                                  # enabled_dates = list(map_df['date'].values),
                                    )
@@ -227,6 +228,13 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
 context_window = pn.widgets.TextInput(name='Window of word:', placeholder = 'Enter a value here ...',
                                 value = str(5)
                                 )
+
+search_bar = pn.widgets.TextInput(name='Search:', value='France,Deutschland,Suomi')
+
+clear_button = pn.widgets.Button(name='Clear search', button_type='primary')
+
+case_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
+
 def read_sql_tmpfile(query, db_engine, arg=None):
     with tempfile.TemporaryFile() as tmpfile:
         conn = db_engine.raw_connection()
@@ -319,8 +327,6 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     '''
     ent_dates = read_sql_tmpfile(q, engine, args)
 
-    # # print('DATES', ent_dates)
-    #
     merge_df = ent_news.merge(ent_dates, left_on='id_ent', right_on='id_ent')
     ent_id = tuple(merge_df['id_ent'].unique().tolist())
     args = (ent_id,)
@@ -331,20 +337,8 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     ent_df = read_sql_tmpfile(q, engine, args)
     map_df = ent_df.merge(merge_df, left_on = 'id_ent', right_on='id_ent')
 
-    # merge_df['id_ent'] = merge_df['id_ent'].astype(str)
-
-    # print(df_page)
-    # # print(merge_df)
-    # args = (lg, newspaper, start_date, end_date)
-    # q = '''SELECT * from entities
-    # WHERE "lang" IN %s
-    # AND "newspaper" IN %s
-    # AND "date" BETWEEN %s AND %s
-    # '''
-    # map_df = read_sql_tmpfile(q, engine, args)
 
     map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
-    # map_df['anim_date'] = map_df['date'].dt.strftime('%B-%Y')
     map_df['year'] = pd.DatetimeIndex(map_df['date']).year
     map_df['year'] = map_df['year'].astype(str)
     map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
@@ -359,26 +353,37 @@ def get_df_page(map_df, context_window):
     """
 
     """
-    ent_id = tuple(map_df['id_ent'].unique().tolist())
-    ent_id = ent_id[:50]
-    # print(type(ent_id[0]))
-    args = (ent_id,)
-    q = '''SELECT DISTINCT ent.id_ent, ent.mention,
-    context.left_context, context.right_context
-    FROM entities2 as ent
-    INNER JOIN entities_context
-    ON ent.id_ent = entities_context.id_ent
-    INNER JOIN context
-    ON entities_context.id_context = context.id_context
-    WHERE ent.id_ent IN %s
-    '''
-    df_page = read_sql_tmpfile(q, engine, args)
-    context_window = int(context_window.value)
-    # geo_df['date'] = pd.DatetimeIndex(geo_df['date']).strftime("%Y-%m-%d")
-    df_page['context_word_window'] = context_window
-    df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, context_window))
-    df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, context_window, left=False))
-    df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+    search_df = search_keyword_in_data(map_df)
+    if not search_df.empty:
+        ent_id = tuple(search_df['id_ent'].unique().tolist())
+        # ent_id = ent_id[:50]
+        # print(type(ent_id[0]))
+        args = (ent_id,)
+        q = '''SELECT DISTINCT ent.id_ent, ent.mention, ent.article_link,
+        context.left_context, context.right_context
+        FROM entities2 as ent
+        INNER JOIN entities_context
+        ON ent.id_ent = entities_context.id_ent
+        INNER JOIN context
+        ON entities_context.id_context = context.id_context
+        WHERE ent.id_ent IN %s
+        '''
+        df_page = read_sql_tmpfile(q, engine, args)
+        context_window = int(context_window.value)
+        df_page['context_word_window'] = context_window
+        df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, context_window))
+        df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, context_window, left=False))
+        df_page['article_link'] = df_page.apply(convert, args=('article_link', 'View Article'), axis=1)
+        # df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
+
+    else:
+        df_page = pd.DataFrame.from_dict(
+            {'window_left_context': ['No result'],
+             'mention': ['No result'],
+             'window_right_context': ['No result'],
+             'article_link': ['No result']}
+        )
+
     return df_page
 
 def get_country_freq(map_df, borders_df):
@@ -513,7 +518,7 @@ def get_map_plot():
                 ],
                 xanchor='left',
                 yanchor='top',
-                x=0,
+                x=0.01,
                 y=1.05
             )
         ]
@@ -568,7 +573,8 @@ def update_entities_plot(event):
     entities['marker']['size'] = grp_map_df['freq']
 
     # new_df_page = new_df.reset_index()
-    new_df_page = new_map_df[['window_left_context', 'mention', 'window_right_context']]
+    # new_df_page = new_map_df[['window_left_context', 'mention', 'window_right_context']]
+    new_df_page = get_df_page(new_map_df, context_window)
     df_page.iloc[:,:] = new_df_page
     table.value = new_df_page
 
@@ -586,11 +592,11 @@ def update_entities_plot(event):
     freqplot.object = new_freq_fig
 
 def update_frequency_plot(event):
-    new_df = map_df[
+    new_map_df = map_df[
         (map_df['freq'] >= int(min_freq.value))
         & (map_df['freq'] <= int(max_freq.value))
     ]
-    groupby_data = new_df.groupby('geometry')
+    groupby_data = new_map_df.groupby('geometry')
     new_grp_map_df = groupby_data.first()
     new_grp_map_df = new_grp_map_df.reset_index()
     grp_map_df.iloc[:, :] = new_grp_map_df
@@ -602,7 +608,8 @@ def update_frequency_plot(event):
     entities['hovertext'] = grp_map_df['txthover']
     entities['marker']['size'] = grp_map_df['freq']
 
-    new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+    # new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+    new_df_page = get_df_page(new_map_df, context_window)
     df_page.iloc[:,:] = new_df_page
     table.value = new_df_page
 
@@ -659,27 +666,44 @@ def update_context_window(event):
 
     new_window = int(context_window.value)
 
-    new_df = map_df[['left_context', 'mention', 'right_context']]
+    # new_df = map_df[['left_context', 'mention', 'right_context']]
 
-    new_df['context_word_window'] = new_window
-    new_df['window_left_context'] = map_df['left_context'].apply(lambda x: get_window(x, new_window))
-    new_df['window_right_context'] = map_df['right_context'].apply(lambda x: get_window(x, new_window, left=False))
-    df_page.iloc[:]['window_left_context'] = new_df['window_left_context']
-    df_page.iloc[:]['window_right_context'] = new_df['window_right_context']
+    # display_page['context_word_window'] = new_window
+    display_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, new_window))
+    display_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, new_window, left=False))
+    display_page.iloc[:]['window_left_context'] = display_page['window_left_context']
+    display_page.iloc[:]['window_right_context'] = display_page['window_right_context']
     # table.stream(df_page, follow=False)
-    table.value = df_page
+    table.value = display_page
+
+def search_keyword_in_data(map_df):
+    """
+
+    """
+    if search_bar.value:
+        pattern = search_bar.value
+        if pattern[-1] == ',':
+            pattern = pattern[:-1]
+
+        pattern = re.escape(pattern)
+        pattern = pattern.replace(',', '|')
+
+        # print(map_df['mention'])
+        if case_checkbox.value:
+            search_df = map_df[map_df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+
+        else:
+            search_df = map_df[map_df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+
+        return search_df
 
 def search_entity(event):
     """
     Search exact entity in column
     """
-
-    pattern = search_bar.value
-    if case_checkbox.value:
-        pattern = re.compile(f"{pattern}", re.IGNORECASE)
-    new_search_df = df_page[df_page['mention'].str.contains(pattern)]
-
-    table.value = new_search_df
+    print(search_bar.value)
+    new_search_df = get_df_page(map_df, context_window)
+    table.value = new_search_df[['window_left_context', 'mention', 'window_right_context', 'article_link']]
     table.value = table.value.dropna()
 
 
@@ -690,7 +714,7 @@ def clear_concordancer(event):
 
     search_bar.value = ''
     # entity_display.object = ''
-    table.value = df_page
+    table.value = display_page
 
 warmap, map_df, grp_map_df, df_page = get_map_plot()
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
@@ -724,22 +748,18 @@ context_window.param.watch(update_context_window, 'value')
 min_freq.param.watch(update_frequency_plot, 'value')
 max_freq.param.watch(update_frequency_plot, 'value')
 
-
-search_bar = pn.widgets.TextInput(name='Search:')
 search_bar.param.watch(search_entity, 'value')
-
-clear_button = pn.widgets.Button(name='Clear concordancer', button_type='primary')
 clear_button.param.watch(clear_concordancer, 'value')
 
-case_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
 
 
-setting_col = pn.WidgetBox('### Options',
+setting_col = pn.WidgetBox(
             lg_select, newspapers_select,
               start_date, end_date,
               min_freq, max_freq,
             min_duration, max_duration,
             front_selection,
+            title='Select data'
                            )
 
 plot_config = {
@@ -797,11 +817,22 @@ def update_table(df, pattern):
 
     return df
 
+bokeh_editors = {
+    'window_left_context': StringFormatter(),
+    'mention': StringFormatter(),
+    'window_right_context': StringFormatter(),
+    'article_link': HTMLTemplateFormatter()
+}
+display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
 
-table = pn.widgets.Tabulator(df_page, layout='fit_data_table', selectable='checkbox',
+
+table = pn.widgets.Tabulator(display_page, layout='fit_data_table', selectable='checkbox',
                              pagination='remote', page_size=10,
-                             # configuration={'responsiveLayout': 'hide'}
+                             formatters=bokeh_editors
                              )
+
+
+# table.style.apply(style_html)
 
 def download_as_csv():
     sio = StringIO()
@@ -842,17 +873,7 @@ table.add_filter(pn.bind(update_table, pattern=context_window))
 table.add_filter(pn.bind(update_table, pattern=search_bar))
 table.add_filter(pn.bind(update_table, pattern=clear_button))
 
-# col_table = pn.Column('# Concordancer',
-#                              search_bar,
-#                              case_checkbox,
-#                              clear_button,
-#                              context_window,
-#                              table,
-#                              csv_download,
-#                              xlsx_download,
-#                              json_download
-#
-#                              )
+
 col_table = pn.Card(
                              search_bar,
                              case_checkbox,
@@ -873,6 +894,8 @@ def update_freq_plot(event):
     """
     Updates entities frequency plot
     """
+    # TODO : UPDATE THIS WITH REAL VALUES
+    # todo : COUNT ?
     freq_input_value = freq_input.value.replace(' ', '')
     if freq_input_value[-1] == ',':
         freq_input_value = freq_input_value[:-1]
@@ -977,16 +1000,15 @@ template = """
 
 <div class="fixed_div">
     <button class="headernav">SpaceWars</button>
-     <div class="dropdown">
-      <button onclick="myFunction()" class="dropbtn">Select data <i class="fa fa-caret-down"></i></button>
-      <div id="myDropdown" class="dropdown-content">
-        {{ embed(roots.setting_col)}} 
-      </div>
-    </div> 
     <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
     <button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
     <button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
 
+</div>
+<button id="openbtn" class="btn btn-warning" onclick="displayOptions()">Select Data</button> 
+
+<div id="mySidebar" class="sidebar">
+    {{ embed(roots.setting_col)}} 
 </div>
 
 <div id="Warmap" class="tabcontent">
@@ -996,17 +1018,15 @@ template = """
 <div id="Concordancer" class="tabcontent">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-4">
+            <div class="col-lg-5">
                   {{ embed(roots.table)}}
             </div>
-            <div class="col-lg-4">
+            <div class="col-lg-7">
                   {{ embed(roots.freq)}}
-        
-            </div>
-            <div class="col-lg-4">
                   {{ embed(roots.news)}}
         
             </div>
+
         </div>
     </div>
 
@@ -1022,14 +1042,30 @@ ADD VIDEOS
 <script>
 /* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
 function openNav() {
-  document.getElementById("mySidebar").style.width = "25em";
-  document.getElementById("main").style.marginLeft = "25em";
+  console.log(  document.getElementById("mySidebar").style.height);
+  document.getElementById("mySidebar").style.height = "50em";
+  document.getElementById("main").style.marginLeft = "50em";
 }
 
 /* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
 function closeNav() {
-  document.getElementById("mySidebar").style.width = "0";
+  document.getElementById("mySidebar").style.height = "0";
   document.getElementById("main").style.marginLeft = "0";
+}
+
+function displayOptions() {
+    x_height = "50em";
+    barHeight = document.getElementById("mySidebar");
+    if (barHeight.style.height != x_height) {
+    
+        barHeight.style.height = x_height;
+        document.getElementById("main").style.marginLeft = x_height;  
+
+    } else {            
+        barHeight.style.height = "0";
+        document.getElementById("main").style.marginLeft = "0";
+  
+    }
 }
 
 function openPage(pageName, elmnt, color) {
@@ -1084,11 +1120,12 @@ window.onclick = function(event) {
 # conc_panel = pn.Row(col_table, col_freq, col_metadata)
 conc_panel = pn.Row(col_table, col_freq, col_metadata, )
 tmpl = pn.Template(template)
-tmpl.add_variable('app_title', '<h1>SpaceWars</h1>')
 tmpl.add_panel('warmap', map_panel)
 tmpl.add_panel('table', col_table)
 tmpl.add_panel('freq', col_freq)
 tmpl.add_panel('news', col_metadata)
+tmpl.add_panel('setting_col', setting_col)
+tmpl.servable()
 
 
 # tmpl.add_panel('row_table', row_concordancer)
@@ -1097,9 +1134,7 @@ tmpl.add_panel('news', col_metadata)
 
 
 # tmpl.add_panel('tabs', tabs)
-tmpl.add_panel('setting_col', setting_col)
 # tmpl.add_panel('settings', setting_row)
-tmpl.servable()
 
 
 
