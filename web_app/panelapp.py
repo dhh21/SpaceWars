@@ -896,13 +896,23 @@ def update_freq_plot(event):
     """
     # TODO : UPDATE THIS WITH REAL VALUES
     # todo : COUNT ?
-    freq_input_value = freq_input.value.replace(' ', '')
-    if freq_input_value[-1] == ',':
-        freq_input_value = freq_input_value[:-1]
-    list_keywords = freq_input_value.split(',')
 
-    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    pattern = freq_input.value
+    if pattern[-1] == ',':
+        pattern = pattern[:-1]
+
+    pattern = re.escape(pattern)
+    pattern = pattern.replace(',', '|')
+    if case_checkbox.value:
+        search_df = df_page[df_page['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+
+    else:
+        search_df = df_page[df_page['mention'].str.contains(pattern, case=True, regex=True, na=False)]
+
+    df_freq = search_df.merge(map_df, left_on='id_ent', right_on='id_ent')
+    df_freq.rename(columns={'mention_x': 'mention'}, inplace=True)
+    df_freq = df_freq.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+
     if x_axis_select.value != 'date':
         new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
     else:
@@ -918,21 +928,38 @@ freq_button = pn.widgets.Button(name= 'Search')
 
 freq_button.param.watch(update_freq_plot, 'value')
 
-freq_input_value = freq_input.value.replace(' ', '')
-if freq_input_value[-1] == ',':
-    freq_input_value = freq_input_value[:-1]
-list_keywords = freq_input_value.split(',')
+# freq_input_value = freq_input.value.replace(' ', '')
+# if freq_input_value[-1] == ',':
+#     freq_input_value = freq_input_value[:-1]
+# list_keywords = freq_input_value.split(',')
+#
+# df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+# df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
 
-df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+pattern = freq_input.value
+if pattern[-1] == ',':
+    pattern = pattern[:-1]
+
+pattern = re.escape(pattern)
+pattern = pattern.replace(',', '|')
+if case_checkbox.value:
+    search_df = df_page[df_page['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+
+else:
+    search_df = df_page[df_page['mention'].str.contains(pattern, case=True, regex=True, na=False)]
+
+df_freq = search_df.merge(map_df, left_on='id_ent', right_on='id_ent')
+df_freq.rename(columns={'mention_x': 'mention'}, inplace=True)
+df_freq = df_freq.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
 
 freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
-freq_fig.update_layout(legend=dict(
-    yanchor="top",
-    y=0.99,
-    xanchor="left",
-    x=0.01
-))
+
+# freq_fig.update_layout(legend=dict(
+#     yanchor="top",
+#     y=0.99,
+#     xanchor="right",
+#     x=1
+# ))
 freq_fig.update_yaxes(automargin=True)
 freq_fig.update_xaxes(automargin=True)
 
