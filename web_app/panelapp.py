@@ -87,7 +87,7 @@ reversed_lg = {
 
 # TODO: USE VALUES IN DB ?
 dic_news = {
-    "Arbeiter Zeitung":'arbeiter_zeitung',
+    "Arbeiter-Zeitung":'arbeiter_zeitung',
     "Helsingin Sanomat": 'helsingin_sanomat',
     "Illustrierte Kronen-Zeitung": 'illustrierte_kronen_zeitung',
     "Le Matin": 'le_matin',
@@ -174,6 +174,10 @@ def get_widget_values():
             "durations": durations,
             "fronts": fronts
         }
+
+# class SpaceWars:
+#     def __init__(self):
+
 
 widget_values = get_widget_values()
 
@@ -317,7 +321,6 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     AND newspapers.newspaper in %s
     '''
     ent_news = read_sql_tmpfile(q, engine, args)
-
     start_date = str(start_date.value)
     end_date = str(end_date.value)
     args = (start_date, end_date)
@@ -351,7 +354,12 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
         map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
         map_df = get_entities_hover_text(map_df)
 
-        return map_df
+    else:
+        map_df = pd.DataFrame(columns=['id_ent', 'geometry', 'lat', 'lon', 'mention', 'wikidata_link',
+       'article_link', 'newspaper', 'lang', 'date', 'year', 'freq',
+       'txthover'])
+    return map_df
+
 
 def get_df_page(map_df, context_window):
     """
@@ -558,69 +566,86 @@ def get_map_plot():
     return fig, map_df, grp_map_df, df_page
 
 def update_entities_plot(event):
-    new_map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
-    ## updates map_df to new values
-    map_df.loc[:,:] = new_map_df
-
-    groupby_data = new_map_df.groupby('geometry')
-    new_grp_map_df = groupby_data.first()
-    new_grp_map_df = new_grp_map_df.reset_index()
-    grp_map_df.iloc[:, :] = new_grp_map_df
-    grp_map_df.dropna(inplace=True)
-
-    entities = warmap['data'][1]
-    entities['lat'] = grp_map_df['lat']
-    entities['lon'] = grp_map_df['lon']
-    entities['hovertext'] = grp_map_df['txthover']
-    entities['marker']['size'] = grp_map_df['freq']
-
-    print(map_df.columns)
-
-    # new_df_page = new_df.reset_index()
-    # new_df_page = new_map_df[['window_left_context', 'mention', 'window_right_context']]
-    new_df_page = get_df_page(new_map_df, context_window)
-    df_page.iloc[:,:] = new_df_page
-
-    table.value = new_df_page
-
-    update_freq_plot(new_df_page)
-
-    # freq_input_value = freq_input.value.replace(' ', '')
-    # if freq_input_value[-1] == ',':
-    #     freq_input_value = freq_input_value[:-1]
-    # list_keywords = freq_input_value.split(',')
-    #
-    # df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-    # df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    # if x_axis_select.value != 'date':
-    #     new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
-    # else:
-    #     new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
-    # freqplot.object = new_freq_fig
-
-def update_frequency_plot(event):
-    new_map_df = map_df[
+    global map_df
+    global grp_map_df
+    global df_page
+    global df_battles
+    global display_page
+    map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+    map_df = map_df[
         (map_df['freq'] >= int(min_freq.value))
         & (map_df['freq'] <= int(max_freq.value))
-    ]
-    groupby_data = new_map_df.groupby('geometry')
-    new_grp_map_df = groupby_data.first()
-    new_grp_map_df = new_grp_map_df.reset_index()
-    grp_map_df.iloc[:, :] = new_grp_map_df
+        ]
+
+    ## updates map_df to new values
+
+    groupby_data = map_df.groupby('geometry')
+    grp_map_df = groupby_data.first()
+    grp_map_df = grp_map_df.reset_index()
+
+    df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
+    battle_map = warmap['data'][2]
+    # print(battle_map['txt'])
+    battle_map['lat'] = df_battles['lat']
+    battle_map['lon'] = df_battles['lon']
+    battle_map['hovertext'] = df_battles['txthover']
+    battle_map['marker']['color'] = df_battles['Duration']
+
+    if not map_df.empty:
+        entities = warmap['data'][1]
+        entities['lat'] = grp_map_df['lat']
+        entities['lon'] = grp_map_df['lon']
+        entities['hovertext'] = grp_map_df['txthover']
+        entities['marker']['size'] = grp_map_df['freq']
+
+    else:
+        warmap.update_layout(
+            xaxis={"visible": False},
+            yaxis={"visible": False},
+            annotations=[
+                {
+                    "text": "Please select v and m",
+                    "xref": "paper",
+                    "yref": "paper",
+                    "showarrow": False,
+                    "font": {
+                        "size": 28
+                    }
+                }
+            ]
+        )
 
 
-    entities = warmap['data'][1]
-    entities['lat'] = grp_map_df['lat']
-    entities['lon'] = grp_map_df['lon']
-    entities['hovertext'] = grp_map_df['txthover']
-    entities['marker']['size'] = grp_map_df['freq']
+    df_page = get_df_page(map_df, context_window)
+    display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+    table.value = display_page
 
-    # new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
-    new_df_page = get_df_page(new_map_df, context_window)
-    df_page.iloc[:,:] = new_df_page
-    table.value = new_df_page
+    update_freq_plot(df_page)
 
-    update_freq_plot(new_df_page)
+
+# def update_frequency_plot(event):
+#
+#     new_map_df = map_df[
+#         (map_df['freq'] >= int(min_freq.value))
+#         & (map_df['freq'] <= int(max_freq.value))
+#     ]
+#     groupby_data = new_map_df.groupby('geometry')
+#     new_grp_map_df = groupby_data.first()
+#     new_grp_map_df = new_grp_map_df.reset_index()
+#     # grp_map_df.iloc[:, :] = new_grp_map_df
+#
+#
+#     entities = warmap['data'][1]
+#     entities['lat'] = grp_map_df['lat']
+#     entities['lon'] = grp_map_df['lon']
+#     entities['hovertext'] = grp_map_df['txthover']
+#     entities['marker']['size'] = grp_map_df['freq']
+#
+#     # new_df_page = new_df[['window_left_context', 'mention', 'window_right_context']]
+#     df_page = get_df_page(map_df, context_window)
+#     table.value = df_page
+#
+#     update_freq_plot(df_page)
 
 
     # freq_input_value = freq_input.value.replace(' ', '')
@@ -637,14 +662,14 @@ def update_frequency_plot(event):
     # freqplot.object = new_freq_fig
 
 
-def update_battle_plot(event):
-
-    df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
-    battle_map = warmap['data'][3]
-    battle_map['lat'] = df_battles['lat']
-    battle_map['lon'] = df_battles['lon']
-    battle_map['txthover'] = df_battles['txthover']
-    battle_map['marker']['size'] = df_battles['Duration']
+# def update_battle_plot(event):
+#
+#     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
+#     battle_map = warmap['data'][3]
+#     battle_map['lat'] = df_battles['lat']
+#     battle_map['lon'] = df_battles['lon']
+#     battle_map['txthover'] = df_battles['txthover']
+#     battle_map['marker']['size'] = df_battles['Duration']
 
 
 # TODO: IF CAN BORDERS BY BACKGROUND IMAGE
@@ -733,20 +758,22 @@ max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder =
                                 value = map_df['freq'].max().astype('str')
                                 )
 
+data_search_button.param.watch(update_entities_plot, 'value')
+
+
 # adding callbacks to update entities points and table
 # lg_select.param.watch(update_entities_plot, 'value')
 # newspapers_select.param.watch(update_entities_plot, 'value')
 # start_date.param.watch(update_entities_plot, 'value')
 # end_date.param.watch(update_entities_plot, 'value')
-data_search_button.param.watch(update_entities_plot, 'value')
 
 
 # adding callbacks to update battle points
-min_duration.param.watch(update_battle_plot, 'value')
-max_duration.param.watch(update_battle_plot, 'value')
-start_date.param.watch(update_battle_plot, 'value')
-end_date.param.watch(update_battle_plot, 'value')
-front_selection.param.watch(update_battle_plot, 'value')
+# min_duration.param.watch(update_battle_plot, 'value')
+# max_duration.param.watch(update_battle_plot, 'value')
+# start_date.param.watch(update_battle_plot, 'value')
+# end_date.param.watch(update_battle_plot, 'value')
+# front_selection.param.watch(update_battle_plot, 'value')
 
 # adding callbacks to update country borders
 start_date.param.watch(update_country_borders, 'value')
@@ -756,8 +783,8 @@ end_date.param.watch(update_country_borders, 'value')
 context_window.param.watch(update_context_window, 'value')
 
 # adding callbacks to update frequencies on plot
-min_freq.param.watch(update_frequency_plot, 'value')
-max_freq.param.watch(update_frequency_plot, 'value')
+# min_freq.param.watch(update_frequency_plot, 'value')
+# max_freq.param.watch(update_frequency_plot, 'value')
 
 setting_col = pn.WidgetBox(
             lg_select, newspapers_select,
@@ -912,6 +939,7 @@ def update_freq_plot(event):
     """
     # TODO : UPDATE THIS WITH REAL VALUES
     # todo : COUNT ?
+    # if not df_page.empty:
 
     pattern = freq_input.value
     if pattern[-1] == ',':
@@ -925,15 +953,21 @@ def update_freq_plot(event):
     else:
         search_df = df_page[df_page['mention'].str.contains(pattern, case=True, regex=True, na=False)]
 
-    df_freq = search_df.merge(map_df, left_on='id_ent', right_on='id_ent')
-    df_freq.rename(columns={'mention_x': 'mention'}, inplace=True)
-    df_freq = df_freq.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    try:
+        df_freq = search_df.merge(map_df, left_on='id_ent', right_on='id_ent')
+        df_freq.rename(columns={'mention_x': 'mention'}, inplace=True)
+        df_freq = df_freq.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
 
-    if x_axis_select.value != 'date':
-        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
-    else:
-        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
-    freqplot.object = new_freq_fig
+        if x_axis_select.value != 'date':
+            new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+        else:
+            new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+        freqplot.object = new_freq_fig
+    except:
+        # clears figure if no data has been selected
+        freqplot.object = go.Figure()
+    # else:
+    #     freqplot.object = go.Figure()
 
 
 freq_input = pn.widgets.TextInput(name = 'Keyword(s):', value='France,Deutschland,Suomi')
