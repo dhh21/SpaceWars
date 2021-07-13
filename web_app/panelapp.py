@@ -89,7 +89,7 @@ reversed_lg = {
 dic_news = {
     "Arbeiter Zeitung":'arbeiter_zeitung',
     "Helsingin Sanomat": 'helsingin_sanomat',
-    "Illustrierte Kronen Zeitung": 'illustrierte_kronen_zeitung',
+    "Illustrierte Kronen-Zeitung": 'illustrierte_kronen_zeitung',
     "Le Matin": 'le_matin',
     "L'Œuvre": 'l_oeuvre',
     # "Neue Freie Presse": 'neue_freie_presse'
@@ -219,6 +219,8 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
                                      options = widget_values['fronts']
                                          )
 
+data_search_button = pn.widgets.Button(name='Search', button_type='primary')
+
 # empty at first, display data about entity when clicked on it
 ## TODO: DISPLAY DATA ABOUT CAPITALS AND BATTLES AS WELL ?
 # entity_display = pn.pane.Markdown("",)
@@ -231,7 +233,9 @@ context_window = pn.widgets.TextInput(name='Window of word:', placeholder = 'Ent
 
 search_bar = pn.widgets.TextInput(name='Search:', value='France,Deutschland,Suomi')
 
-clear_button = pn.widgets.Button(name='Clear search', button_type='primary')
+table_search_button = pn.widgets.Button(name='Search', button_type='primary')
+
+clear_button = pn.widgets.Button(name='Clear search', button_type='danger')
 
 case_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
 
@@ -326,28 +330,28 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     WHERE dates.date BETWEEN %s AND %s
     '''
     ent_dates = read_sql_tmpfile(q, engine, args)
-
     merge_df = ent_news.merge(ent_dates, left_on='id_ent', right_on='id_ent')
-    ent_id = tuple(merge_df['id_ent'].unique().tolist())
-    args = (ent_id,)
-    q = '''SELECT DISTINCT ent.id_ent, ent.geometry, ent.lat, ent.lon, ent.mention, ent.wikidata_link, ent.article_link
-        FROM entities2 as ent
-        WHERE ent.id_ent IN %s
-        '''
-    ent_df = read_sql_tmpfile(q, engine, args)
-    map_df = ent_df.merge(merge_df, left_on = 'id_ent', right_on='id_ent')
+    if not merge_df.empty:
+        ent_id = tuple(merge_df['id_ent'].unique().tolist())
+        args = (ent_id,)
+        q = '''SELECT DISTINCT ent.id_ent, ent.geometry, ent.lat, ent.lon, ent.mention, ent.wikidata_link, ent.article_link
+            FROM entities2 as ent
+            WHERE ent.id_ent IN %s
+            '''
+        ent_df = read_sql_tmpfile(q, engine, args)
+        map_df = ent_df.merge(merge_df, left_on = 'id_ent', right_on='id_ent')
 
 
-    map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
-    map_df['year'] = pd.DatetimeIndex(map_df['date']).year
-    map_df['year'] = map_df['year'].astype(str)
-    map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
-    map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
-    map_df['wikidata_link'] = map_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
-    map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
-    map_df = get_entities_hover_text(map_df)
+        map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
+        map_df['year'] = pd.DatetimeIndex(map_df['date']).year
+        map_df['year'] = map_df['year'].astype(str)
+        map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
+        map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
+        map_df['wikidata_link'] = map_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
+        map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
+        map_df = get_entities_hover_text(map_df)
 
-    return map_df
+        return map_df
 
 def get_df_page(map_df, context_window):
     """
@@ -551,12 +555,10 @@ def get_map_plot():
     #     showscale=False
     # )
 
-
     return fig, map_df, grp_map_df, df_page
 
 def update_entities_plot(event):
     new_map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
-
     ## updates map_df to new values
     map_df.loc[:,:] = new_map_df
 
@@ -564,32 +566,37 @@ def update_entities_plot(event):
     new_grp_map_df = groupby_data.first()
     new_grp_map_df = new_grp_map_df.reset_index()
     grp_map_df.iloc[:, :] = new_grp_map_df
+    grp_map_df.dropna(inplace=True)
 
-    # todo: CHANGER INDEX QUAND LES AUTRES MAPS SERONT AJOUTEES
     entities = warmap['data'][1]
     entities['lat'] = grp_map_df['lat']
     entities['lon'] = grp_map_df['lon']
     entities['hovertext'] = grp_map_df['txthover']
     entities['marker']['size'] = grp_map_df['freq']
 
+    print(map_df.columns)
+
     # new_df_page = new_df.reset_index()
     # new_df_page = new_map_df[['window_left_context', 'mention', 'window_right_context']]
     new_df_page = get_df_page(new_map_df, context_window)
     df_page.iloc[:,:] = new_df_page
+
     table.value = new_df_page
 
-    freq_input_value = freq_input.value.replace(' ', '')
-    if freq_input_value[-1] == ',':
-        freq_input_value = freq_input_value[:-1]
-    list_keywords = freq_input_value.split(',')
+    update_freq_plot(new_df_page)
 
-    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    if x_axis_select.value != 'date':
-        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
-    else:
-        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
-    freqplot.object = new_freq_fig
+    # freq_input_value = freq_input.value.replace(' ', '')
+    # if freq_input_value[-1] == ',':
+    #     freq_input_value = freq_input_value[:-1]
+    # list_keywords = freq_input_value.split(',')
+    #
+    # df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    # df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    # if x_axis_select.value != 'date':
+    #     new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+    # else:
+    #     new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    # freqplot.object = new_freq_fig
 
 def update_frequency_plot(event):
     new_map_df = map_df[
@@ -613,18 +620,21 @@ def update_frequency_plot(event):
     df_page.iloc[:,:] = new_df_page
     table.value = new_df_page
 
-    freq_input_value = freq_input.value.replace(' ', '')
-    if freq_input_value[-1] == ',':
-        freq_input_value = freq_input_value[:-1]
-    list_keywords = freq_input_value.split(',')
+    update_freq_plot(new_df_page)
 
-    df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-    df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
-    if x_axis_select.value != 'date':
-        new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
-    else:
-        new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
-    freqplot.object = new_freq_fig
+
+    # freq_input_value = freq_input.value.replace(' ', '')
+    # if freq_input_value[-1] == ',':
+    #     freq_input_value = freq_input_value[:-1]
+    # list_keywords = freq_input_value.split(',')
+    #
+    # df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
+    # df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
+    # if x_axis_select.value != 'date':
+    #     new_freq_fig = px.bar(df_freq, x=x_axis_select.value, y='frequency', color='mention', barmode='group')
+    # else:
+    #     new_freq_fig = px.area(df_freq, x=x_axis_select.value, y='frequency', color='mention', line_group='mention')
+    # freqplot.object = new_freq_fig
 
 
 def update_battle_plot(event):
@@ -701,7 +711,6 @@ def search_entity(event):
     """
     Search exact entity in column
     """
-    print(search_bar.value)
     new_search_df = get_df_page(map_df, context_window)
     table.value = new_search_df[['window_left_context', 'mention', 'window_right_context', 'article_link']]
     table.value = table.value.dropna()
@@ -725,10 +734,12 @@ max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder =
                                 )
 
 # adding callbacks to update entities points and table
-lg_select.param.watch(update_entities_plot, 'value')
-newspapers_select.param.watch(update_entities_plot, 'value')
-start_date.param.watch(update_entities_plot, 'value')
-end_date.param.watch(update_entities_plot, 'value')
+# lg_select.param.watch(update_entities_plot, 'value')
+# newspapers_select.param.watch(update_entities_plot, 'value')
+# start_date.param.watch(update_entities_plot, 'value')
+# end_date.param.watch(update_entities_plot, 'value')
+data_search_button.param.watch(update_entities_plot, 'value')
+
 
 # adding callbacks to update battle points
 min_duration.param.watch(update_battle_plot, 'value')
@@ -748,17 +759,13 @@ context_window.param.watch(update_context_window, 'value')
 min_freq.param.watch(update_frequency_plot, 'value')
 max_freq.param.watch(update_frequency_plot, 'value')
 
-search_bar.param.watch(search_entity, 'value')
-clear_button.param.watch(clear_concordancer, 'value')
-
-
-
 setting_col = pn.WidgetBox(
             lg_select, newspapers_select,
               start_date, end_date,
               min_freq, max_freq,
             min_duration, max_duration,
             front_selection,
+            data_search_button,
             title='Select data'
                            )
 
@@ -863,6 +870,12 @@ json_download = pn.widgets.FileDownload(callback=download_as_json, filename='con
                                        button_type='primary', name='Download concordancer to JSON')
 
 
+
+# search_bar.param.watch(search_entity, 'value')
+table_search_button.param.watch(search_entity, 'value')
+
+clear_button.param.watch(clear_concordancer, 'value')
+
 table.add_filter(pn.bind(update_table, pattern=lg_select))
 table.add_filter(pn.bind(update_table, pattern=newspapers_select))
 table.add_filter(pn.bind(update_table, pattern=start_date))
@@ -870,15 +883,18 @@ table.add_filter(pn.bind(update_table, pattern=end_date))
 table.add_filter(pn.bind(update_table, pattern=min_freq))
 table.add_filter(pn.bind(update_table, pattern=max_freq))
 table.add_filter(pn.bind(update_table, pattern=context_window))
-table.add_filter(pn.bind(update_table, pattern=search_bar))
+
+# table.add_filter(pn.bind(update_table, pattern=search_bar))
+table.add_filter(pn.bind(update_table, pattern=table_search_button))
 table.add_filter(pn.bind(update_table, pattern=clear_button))
 
 
 col_table = pn.Card(
                              search_bar,
                              case_checkbox,
-                             clear_button,
-                             context_window,
+                            context_window,
+                            table_search_button,
+                            clear_button,
                              table,
                              csv_download,
                              xlsx_download,
@@ -903,7 +919,7 @@ def update_freq_plot(event):
 
     pattern = re.escape(pattern)
     pattern = pattern.replace(',', '|')
-    if case_checkbox.value:
+    if case_checkbox_2.value:
         search_df = df_page[df_page['mention'].str.contains(pattern, case=False, regex=True, na=False)]
 
     else:
@@ -924,17 +940,12 @@ freq_input = pn.widgets.TextInput(name = 'Keyword(s):', value='France,Deutschlan
 
 x_axis_select = pn.widgets.Select(name='Select', options=['date', 'newspaper', 'lang'], value='date')
 
-freq_button = pn.widgets.Button(name= 'Search')
+case_checkbox_2 = pn.widgets.Checkbox(name='Case insensitive search')
+
+freq_button = pn.widgets.Button(name= 'Search', type='primary')
 
 freq_button.param.watch(update_freq_plot, 'value')
 
-# freq_input_value = freq_input.value.replace(' ', '')
-# if freq_input_value[-1] == ',':
-#     freq_input_value = freq_input_value[:-1]
-# list_keywords = freq_input_value.split(',')
-#
-# df_freq = map_df.groupby(['mention', x_axis_select.value]).size().reset_index(name='frequency')
-# df_freq = df_freq[df_freq['mention'].isin(list_keywords)]
 
 pattern = freq_input.value
 if pattern[-1] == ',':
@@ -942,7 +953,7 @@ if pattern[-1] == ',':
 
 pattern = re.escape(pattern)
 pattern = pattern.replace(',', '|')
-if case_checkbox.value:
+if case_checkbox_2.value:
     search_df = df_page[df_page['mention'].str.contains(pattern, case=False, regex=True, na=False)]
 
 else:
@@ -966,7 +977,7 @@ freq_fig.update_xaxes(automargin=True)
 freqplot = pn.pane.Plotly(freq_fig, config={'responsive': True})
 
 row_concordancer = pn.Row(table, pn.Column(csv_download, xlsx_download, json_download))
-row_freq = pn.Row(freqplot, pn.Column(freq_input, x_axis_select, freq_button))
+row_freq = pn.Row(freqplot, pn.Column(freq_input, x_axis_select, case_checkbox_2, freq_button))
 
 # col_freq = pn.Column('# Occurrences',
 #                  freq_input,
