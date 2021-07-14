@@ -11,7 +11,7 @@ from sqlalchemy.engine.url import URL
 import re
 from io import StringIO
 from bokeh.models.widgets.tables import HTMLTemplateFormatter, StringFormatter
-
+import time
 css = ['https://cdn.datatables.net/1.10.24/css/jquery.dataTables.min.css',
        # Below: Needed for export buttons
        'https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css',
@@ -155,7 +155,7 @@ def get_widget_values():
     ## TODO: DO THAT FOR NEWSPAPERS NAME AND LANGUAGE ?
     """
     with engine.connect() as con:
-        q = 'SELECT DISTINCT "date" FROM entities;'
+        q = 'SELECT DISTINCT dates.date FROM dates;'
         dates = [x[0] for x in execute_query(q, con).all()]
         dates = [datetime.strptime(x, "%Y-%m-%d") for x in dates]
         dates = [x.date() for x in dates]
@@ -183,15 +183,14 @@ widget_values = get_widget_values()
 
 lg_select = pn.widgets.MultiSelect(name= 'Language Selection',
                                    value =
-                                   ['French', 'German', 'Finnish'],
-                                   # list(dic_lg.keys()),
-                                   # ['French'],
+                                   # ['French', 'German', 'Finnish'],
+                                   ['French'],
                                     options = list(dic_lg.keys()))
 
 newspapers_select = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
-                                           ['Arbeiter-Zeitung', 'Helsingin Sanomat', 'Le Matin'],
-                                           # ['Le Matin'],
+                                           # ['Arbeiter-Zeitung', 'Helsingin Sanomat', 'Le Matin'],
+                                           ['Le Matin'],
 
                                             options= list(dic_news.keys()))
 
@@ -223,7 +222,40 @@ front_selection = pn.widgets.MultiSelect(name='Select battle front(s)',
                                      options = widget_values['fronts']
                                          )
 
+# def change_button_color(event):
+#     data_search_button.button_type = 'warning'
+#     table_search_button.button_type = 'warning'
+#     data_search_button.name = 'Loading Data ...'
+#     table_search_button.name = 'Loading Data ...'
+
 data_search_button = pn.widgets.Button(name='Search', button_type='primary')
+# function displayOptions() {
+#     x_height = "50em";
+#     barHeight = document.getElementById("mySidebar");
+#     if (barHeight.style.height != x_height) {
+#
+#         barHeight.style.height = x_height;
+#         document.getElementById("main").style.marginLeft = x_height;
+#
+#     } else {
+#         barHeight.style.height = "0";
+#         document.getElementById("main").style.marginLeft = "0";
+#
+#     }
+# }
+cd_code = """
+    var x = document.getElementById("loadingBar");
+    if (window.getComputedStyle(x).display === 'none') {
+        x.style.display = 'block';
+      } else {
+        x.style.display = 'none';
+    }
+
+"""
+data_search_button.js_on_click(code=cd_code)
+
+
+# data_search_button.param.watch(change_button_color, 'value')
 
 # empty at first, display data about entity when clicked on it
 ## TODO: DISPLAY DATA ABOUT CAPITALS AND BATTLES AS WELL ?
@@ -237,6 +269,8 @@ context_window = pn.widgets.TextInput(name='Window of word:', placeholder = 'Ent
 search_bar = pn.widgets.TextInput(name='Search:', value='France,Deutschland,Suomi')
 
 table_search_button = pn.widgets.Button(name='Search', button_type='primary')
+# table_search_button.param.watch(change_button_color, 'value')
+
 
 clear_button = pn.widgets.Button(name='Clear search', button_type='danger')
 
@@ -311,7 +345,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     args = (lg, newspaper)
 
     q = '''SELECT DISTINCT ent.id_ent, newspapers.newspaper, newspapers.lang
-    FROM entities2 as ent
+    FROM entities as ent
     INNER JOIN entities_newspapers
     ON ent.id_ent = entities_newspapers.id_ent
     INNER JOIN newspapers
@@ -324,7 +358,7 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     end_date = str(end_date.value)
     args = (start_date, end_date)
     q = '''SELECT DISTINCT ent.id_ent, dates.date
-    FROM entities2 as ent
+    FROM entities as ent
     INNER JOIN entities_date
     ON ent.id_ent = entities_date.id_ent
     INNER JOIN dates
@@ -336,8 +370,8 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
     if not merge_df.empty:
         ent_id = tuple(merge_df['id_ent'].unique().tolist())
         args = (ent_id,)
-        q = '''SELECT DISTINCT ent.id_ent, ent.geometry, ent.lat, ent.lon, ent.mention, ent.wikidata_link, ent.article_link
-            FROM entities2 as ent
+        q = '''SELECT DISTINCT ent.id_ent, ent.geometry, ent.lat, ent.lon, ent.mention, ent.wikidata_link
+            FROM entities as ent
             WHERE ent.id_ent IN %s
             '''
         ent_df = read_sql_tmpfile(q, engine, args)
@@ -348,14 +382,15 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
         map_df['year'] = pd.DatetimeIndex(map_df['date']).year
         map_df['year'] = map_df['year'].astype(str)
         map_df['freq'] = map_df['geometry'].map(map_df['geometry'].value_counts())
-        map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
+        # map_df['article_link'] = map_df.apply(convert, args=('article_link', 'View Article'), axis=1)
         map_df['wikidata_link'] = map_df.apply(convert, args=('wikidata_link', 'View Wikidata'), axis=1)
         map_df['lang'] = map_df['lang'].apply(lambda x: reversed_lg[x])
         map_df = get_entities_hover_text(map_df)
 
     else:
         map_df = pd.DataFrame(columns=['id_ent', 'geometry', 'lat', 'lon', 'mention', 'wikidata_link',
-       'article_link', 'newspaper', 'lang', 'date', 'year', 'freq',
+       # 'article_link',
+                                       'newspaper', 'lang', 'date', 'year', 'freq',
        'txthover'])
     return map_df
 
@@ -364,15 +399,16 @@ def get_df_page(map_df, context_window):
     """
 
     """
-    search_df = search_keyword_in_data(map_df)
+    print('Search :', search_bar.value)
+    search_df = search_keyword_in_data(map_df, search_bar.value, case_checkbox.value)
+
     if not search_df.empty:
         ent_id = tuple(search_df['id_ent'].unique().tolist())
-        # ent_id = ent_id[:50]
-        # print(type(ent_id[0]))
+
         args = (ent_id,)
-        q = '''SELECT DISTINCT ent.id_ent, ent.mention, ent.article_link,
-        context.left_context, context.right_context
-        FROM entities2 as ent
+        q = '''SELECT DISTINCT ent.id_ent, ent.mention,
+        context.left_context, context.right_context, context.article_link
+        FROM entities as ent
         INNER JOIN entities_context
         ON ent.id_ent = entities_context.id_ent
         INNER JOIN context
@@ -384,6 +420,7 @@ def get_df_page(map_df, context_window):
         df_page['context_word_window'] = context_window
         df_page['window_left_context'] = df_page['left_context'].apply(lambda x: get_window(x, context_window))
         df_page['window_right_context'] = df_page['right_context'].apply(lambda x: get_window(x, context_window, left=False))
+
         df_page['article_link'] = df_page.apply(convert, args=('article_link', 'View Article'), axis=1)
         # df_page = df_page[['window_left_context', 'mention', 'window_right_context']]
 
@@ -417,10 +454,10 @@ token = open(".mapbox_token").read() # you will need your own token
 def get_map_plot():
 
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
-    map_df = map_df[
-        (map_df['freq'] >= 100)
-        & (map_df['freq'] <= 1000)
-        ]
+    # map_df = map_df[
+    #     (map_df['freq'] >= 100)
+    #     & (map_df['freq'] <= 1000)
+    #     ]
 
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     bordersdf = filter_country_borders(start_date, end_date, map_df['mention'].unique())
@@ -569,7 +606,7 @@ def get_map_plot():
     #     showscale=False
     # )
 
-    return fig, map_df, grp_map_df, df_page
+    return fig, map_df, grp_map_df, df_battles, df_page
 
 def update_entities_plot(event):
     global map_df
@@ -580,22 +617,94 @@ def update_entities_plot(event):
     global data_search_button
     # progress.param.style = {'visible': True}
     # setting_col.append(progress)
-    data_search_button.button_type = 'warning'
-    data_search_button.name = 'Loading data ...'
+    with pn.param.set_values(map_panel, ):
+        # data_search_button.button_type = 'warning'
+        # data_search_button.name = 'Loading data ...'
+        # time.sleep(5)
 
-    map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
-    map_df = map_df[
+        map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
+        ## updates map_df to new values
+
+        groupby_data = map_df.groupby('geometry')
+        grp_map_df = groupby_data.first()
+        grp_map_df = grp_map_df.reset_index()
+
+        df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
+        battle_map = warmap['data'][2]
+        # print(battle_map['txt'])
+        battle_map['lat'] = df_battles['lat']
+        battle_map['lon'] = df_battles['lon']
+        battle_map['hovertext'] = df_battles['txthover']
+        battle_map['marker']['color'] = df_battles['Duration']
+
+        if not map_df.empty:
+            warmap['layout']['annotations'] = ()
+            entities = warmap['data'][1]
+            entities['lat'] = grp_map_df['lat']
+            entities['lon'] = grp_map_df['lon']
+            entities['hovertext'] = grp_map_df['txthover']
+            entities['marker']['size'] = grp_map_df['freq']
+
+            df_page = get_df_page(map_df, context_window)
+
+            display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+            table.value = display_page
+
+            update_freq_plot(df_page)
+
+        else:
+            data_search_button.button_type = 'danger'
+            data_search_button.name = 'No data found'
+
+# TODO
+def filter_entities_plot(event):
+
+    new_map_df = map_df[
         (map_df['freq'] >= int(min_freq.value))
         & (map_df['freq'] <= int(max_freq.value))
         ]
 
-    ## updates map_df to new values
+    if map_search_bar.value:
+        new_map_df = search_keyword_in_data(new_map_df, map_search_bar.value, map_checkbox)
 
-    groupby_data = map_df.groupby('geometry')
+    groupby_data = new_map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
 
-    df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
+    warmap['layout']['annotations'] = ()
+    entities = warmap['data'][1]
+    entities['lat'] = grp_map_df['lat']
+    entities['lon'] = grp_map_df['lon']
+    entities['hovertext'] = grp_map_df['txthover']
+    entities['marker']['size'] = grp_map_df['freq']
+
+    # df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
+    new_df_battles = df_battles[
+        (df_battles['Duration'] <= min_duration.value)
+        &        (df_battles['Duration'] >= max_duration.value)
+    ]
+    battle_map = warmap['data'][2]
+    # print(battle_map['txt'])
+    battle_map['lat'] = new_df_battles['lat']
+    battle_map['lon'] = new_df_battles['lon']
+    battle_map['hovertext'] = new_df_battles['txthover']
+    battle_map['marker']['color'] = new_df_battles['Duration']
+
+    filter_df_page = get_df_page(new_map_df, context_window)
+    filter_df_page = filter_df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+    table.value = filter_df_page
+
+    update_freq_plot(filter_df_page)
+
+def clear_filters(event):
+
+    warmap['layout']['annotations'] = ()
+    entities = warmap['data'][1]
+    entities['lat'] = grp_map_df['lat']
+    entities['lon'] = grp_map_df['lon']
+    entities['hovertext'] = grp_map_df['txthover']
+    entities['marker']['size'] = grp_map_df['freq']
+
     battle_map = warmap['data'][2]
     # print(battle_map['txt'])
     battle_map['lat'] = df_battles['lat']
@@ -603,41 +712,22 @@ def update_entities_plot(event):
     battle_map['hovertext'] = df_battles['txthover']
     battle_map['marker']['color'] = df_battles['Duration']
 
-    if not map_df.empty:
-        warmap['layout']['annotations'] = ()
-        entities = warmap['data'][1]
-        entities['lat'] = grp_map_df['lat']
-        entities['lon'] = grp_map_df['lon']
-        entities['hovertext'] = grp_map_df['txthover']
-        entities['marker']['size'] = grp_map_df['freq']
-
-    else:
-        warmap.update_layout(
-            xaxis={"visible": False},
-            yaxis={"visible": False},
-            annotations=[
-                {
-                    "text": "No data found",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "showarrow": False,
-                    "font": {
-                        "size": 28,
-                        "color": 'red'
-                    }
-                }
-            ]
-        )
-
-
-    df_page = get_df_page(map_df, context_window)
-    display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+    # df_page = search_keyword_in_data(map_df)
+    # display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
     table.value = display_page
 
     update_freq_plot(df_page)
 
-    data_search_button.button_type = 'primary'
-    data_search_button.name = 'Search'
+
+map_search_bar = pn.widgets.TextInput(name='Search entity on the map')
+map_checkbox = pn.widgets.Checkbox(name='Case insensitive search')
+filter_data_button = pn.widgets.Button(name='Filter data', button_type='success')
+filter_data_button.param.watch(filter_entities_plot, 'value')
+
+clear_filters_button = pn.widgets.Button(name='Clear filters', button_type='danger')
+clear_filters_button.param.watch(clear_filters, 'value')
+
+
 
 
 # TODO: IF CAN BORDERS BY BACKGROUND IMAGE
@@ -679,26 +769,25 @@ def update_context_window(event):
     # table.stream(df_page, follow=False)
     table.value = display_page
 
-def search_keyword_in_data(map_df):
+def search_keyword_in_data(df, pattern, checkbox):
     """
 
     """
-    if search_bar.value:
-        pattern = search_bar.value
-        if pattern[-1] == ',':
-            pattern = pattern[:-1]
+    # if search_bar.value:
+    # pattern = search_bar.value
+    if pattern[-1] == ',':
+        pattern = pattern[:-1]
 
-        pattern = re.escape(pattern)
-        pattern = pattern.replace(',', '|')
+    pattern = re.escape(pattern)
+    pattern = pattern.replace(',', '|')
 
-        # print(map_df['mention'])
-        if case_checkbox.value:
-            search_df = map_df[map_df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+    # if case_checkbox.value:
+    if checkbox:
+        search_df = df[df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
 
-        else:
-            search_df = map_df[map_df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
-
-        return search_df
+    else:
+        search_df = df[df['mention'].str.contains(pattern, case=False, regex=True, na=False)]
+    return search_df
 
 def search_entity(event):
     """
@@ -707,29 +796,17 @@ def search_entity(event):
     global df_page
     global table_search_button
 
-    table_search_button.button_type = 'warning'
-    table_search_button.name = 'Loading data ...'
+    # table_search_button.button_type = 'warning'
+    # table_search_button.name = 'Loading data ...'
     df_page = get_df_page(map_df, context_window)
     table.value = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
     update_freq_plot(df_page)
 
-    table_search_button.button_type = 'primary'
-    table_search_button.name = 'Search'
-
-    # col_text_options.pop(0)
-    # table.value = table.value.dropna()
+    # table_search_button.button_type = 'primary'
+    # table_search_button.name = 'Search'
 
 
-# def clear_concordancer(event):
-#     """
-#     Clear selection in concordancer and returns full data
-#     """
-#
-#     search_bar.value = ''
-#     # entity_display.object = ''
-#     table.value = display_page
-
-warmap, map_df, grp_map_df, df_page = get_map_plot()
+warmap, map_df, grp_map_df, df_battles, df_page = get_map_plot()
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = '100'
                                 )
@@ -756,24 +833,24 @@ data_search_button.param.watch(update_entities_plot, 'value')
 # front_selection.param.watch(update_battle_plot, 'value')
 
 # adding callbacks to update country borders
-start_date.param.watch(update_country_borders, 'value')
-end_date.param.watch(update_country_borders, 'value')
+# start_date.param.watch(update_country_borders, 'value')
+# end_date.param.watch(update_country_borders, 'value')
 
 # adding callbacks to update context window
 context_window.param.watch(update_context_window, 'value')
 
-# adding callbacks to update frequencies on plot
-# min_freq.param.watch(update_frequency_plot, 'value')
-# max_freq.param.watch(update_frequency_plot, 'value')
-progress = pn.pane.Markdown("",)
 setting_col = pn.WidgetBox(
             lg_select, newspapers_select,
               start_date, end_date,
+                front_selection,
+                data_search_button,
+                map_search_bar,
+                map_checkbox,
               min_freq, max_freq,
             min_duration, max_duration,
-            front_selection,
-            data_search_button,
-            progress,
+            filter_data_button,
+            clear_filters_button,
+            # progress,
             title='Select data'
                            )
 
@@ -794,17 +871,27 @@ map_panel = pn.pane.Plotly(warmap,
 def update_on_click(click_data):
     point = click_data['points'][0]
     print(point)
-    pointindex = point['pointIndex']
-    entity_data = grp_map_df.iloc[pointindex]
 
+    pointHover = point['hovertext']
+    pointHover = pointHover[pointHover.find(':') + 2:]
+    pointHover = pointHover[: pointHover.find('<br>')]
+    # pointHover =pointHover.strip()
+    # pointindex = point['pointIndex']
+    entity_data = grp_map_df[
+        grp_map_df['mention'] == pointHover
+    ]
+    print(entity_data)
+    # entity_data = grp_map_df.iloc[pointindex]
+#     <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
+    md_template = f"""     <b>Entity</b>: {entity_data['mention'].values[0]}<br>
+    <b>Newspaper</b>: {entity_data['newspaper'].values[0]}<br>
+    <b>Language</b>: {entity_data['lang'].values[0]}<br>
+    <b>Date</b>: {entity_data['date'].dt.strftime("%d %B %Y").values[0]}<br>
+    <b>Wikidata link</b>: {entity_data['wikidata_link'].values[0]}<br>
+    <b>Frequency</b>: {entity_data['freq'].values[0]}<br>
+    <b>Latitude</b>: {entity_data['lat'].values[0]}<br>
+    <b>Longitude</b>: {entity_data['lon'].values[0]}<br>"""
 
-    md_template = f"""     <b>Entity</b>: {entity_data['mention']}<br>
-    <b>Newspaper</b>: {entity_data['newspaper']}<br>
-    <b>Language</b>: {entity_data['lang']}<br>
-    <b>Date</b>: {entity_data['date'].strftime("%d %B %Y")}<br>
-    <b>NewsEye link</b>: {entity_data['article_link']}<br>
-    <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
-    <b>Latittude - Longitude</b>: {entity_data['lat']} {entity_data['lon']}<br>"""
 
     #clears previous annotations
     warmap['layout']['annotations'] = ()
@@ -824,7 +911,7 @@ def update_on_click(click_data):
 
     )
 
-    search_bar.value = entity_data['mention']
+    search_bar.value = entity_data['mention'].values[0]
     search_entity(search_bar)
 
 def update_table(df, pattern):
@@ -877,7 +964,6 @@ json_download = pn.widgets.FileDownload(callback=download_as_json, filename='con
 
 
 
-# search_bar.param.watch(search_entity, 'value')
 table_search_button.param.watch(search_entity, 'value')
 
 # clear_button.param.watch(clear_concordancer, 'value')
@@ -915,7 +1001,7 @@ def update_freq_plot(event):
 
         else:
             search_df = df_page[df_page['mention'].str.contains(pattern, case=True, regex=True, na=False)]
-        # print(search_df)
+
         try:
             df_freq = search_df.merge(map_df, left_on='id_ent', right_on='id_ent')
             # print(df_freq)
@@ -982,7 +1068,7 @@ col_text_options = pn.Card(
                              case_checkbox,
                             context_window,
                             table_search_button,
-                            progress,
+                            # progress,
                             csv_download,
                              xlsx_download,
                              json_download,
@@ -1055,7 +1141,10 @@ template = """
 
 
 <div id="mySidebar" class="sidebar">
-    {{ embed(roots.setting_col)}} 
+    {{ embed(roots.setting_col)}}
+    <div id="loadingBar">
+        {{ embed(roots.progress)}}
+    </div>
 </div>
 
 <div id="Warmap" class="tabcontent">
@@ -1086,21 +1175,10 @@ ADD VIDEOS
 
 
 <script>
-/* Set the width of the sidebar to 250px and the left margin of the page content to 250px */
-function openNav() {
-  console.log(  document.getElementById("mySidebar").style.height);
-  document.getElementById("mySidebar").style.height = "50em";
-  document.getElementById("main").style.marginLeft = "50em";
-}
 
-/* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
-function closeNav() {
-  document.getElementById("mySidebar").style.height = "0";
-  document.getElementById("main").style.marginLeft = "0";
-}
 
 function displayOptions() {
-    x_height = "50em";
+    x_height = "60em";
     barHeight = document.getElementById("mySidebar");
     if (barHeight.style.height != x_height) {
     
@@ -1164,9 +1242,13 @@ window.onclick = function(event) {
 # {{ embed(roots.tabs)}}
 #     {{ embed(roots.warmap)}}
 # conc_panel = pn.Row(col_table, col_freq, col_metadata)
+progress = pn.widgets.Progress(active = True)
+
+
 conc_panel = pn.Row(col_text_options, col_text, col_metadata, )
 tmpl = pn.Template(template)
 tmpl.add_panel('warmap', map_panel)
+tmpl.add_panel('progress', progress)
 tmpl.add_panel('text', col_text)
 tmpl.add_panel('textopt', col_text_options)
 tmpl.add_panel('news', col_metadata)
