@@ -502,12 +502,12 @@ def get_map_plot():
             hovertext = grp_map_df['txthover'],
             marker=go.scattermapbox.Marker(
                 size=grp_map_df['freq'],
-                # sizemin = 10,
-                # sizemin = grp_map_df['freq'].min() / 4,
+                # sizemin = 3,
+                sizemin = grp_map_df['freq'].min(),
+                # sizemin = grp_map_df['freq'].min(),
                 sizemode='area',
-                # sizeref=grp_map_df['freq'].max() / 15 ** 2
-                # sizeref=grp_map_df['freq'].max() * 4
-
+                sizeref=grp_map_df['freq'].max() / 3 ** 2
+                # sizeref=grp_map_df['freq'].max()
             ),
             hoverinfo='text'
         )
@@ -831,7 +831,7 @@ def search_entity(event):
 
 warmap, map_df, grp_map_df, df_battles, df_page = get_map_plot()
 min_freq = pn.widgets.TextInput(name='Mininum entity occurrence:', placeholder = 'Enter a value here ...',
-                                value = '100'
+                                value = '1'
                                 )
 max_freq = pn.widgets.TextInput(name='Maximum entity occurrence:', placeholder = 'Enter a value here ...',
                                 value = map_df['freq'].max().astype('str')
