@@ -4,6 +4,7 @@ import plotly.graph_objs as go
 import plotly.express as px
 import json
 import pandas as pd
+import geopandas as gpd
 from sqlalchemy import create_engine
 import tempfile
 from datetime import datetime
@@ -135,14 +136,17 @@ def get_countryborders():
     bordersdf['gwedate'] = pd.to_datetime(bordersdf['gwedate'])
     bordersdf['gwedate'] = bordersdf['gwedate'].dt.strftime("%Y-%m-%d")
 
-    return borderjson, bordersdf
+    test = gpd.GeoDataFrame.from_file('data/borders/countryborders.geojson').set_index('cntry_name')
+    # test
+    print(test)
+    return borderjson, bordersdf, test
 
 
 # engine = create_engine('postgresql://postgres:spacewars@localhost:5432/spacewars')
 engine = create_engine(db_config, echo=True)
 
 
-borderjson, bordersdf = get_countryborders()
+borderjson, bordersdf , test= get_countryborders()
 
 #
 def execute_query(query, con):
@@ -203,8 +207,8 @@ start_date = pn.widgets.DatePicker(name='Start Date',
 end_date = pn.widgets.DatePicker(name='End Date',
                                  enabled_dates=widget_values['dates'],
                                  # todo: SET DEFAULT END VALUE TO 1915
-                                 value=widget_values['dates'][100]
-                                 # value=widget_values['dates'][1000]
+                                 # value=widget_values['dates'][100]
+                                 value=widget_values['dates'][1000]
 
                                  # enabled_dates = list(map_df['date'].values),
                                    )
@@ -479,7 +483,17 @@ def get_map_plot():
     grp_map_df = grp_map_df.reset_index()
 
     bordersdf['zero'] = 0
-    fig = go.Figure()
+    # fig = go.Figure()
+    fig = px.choropleth_mapbox(test,
+                                       geojson=test.geometry,
+                                       locations=test.index,
+                               # featureidkey="properties.cntry_name",
+                               center = {'lon': 2.2137, 'lat': 46.2276},
+                               mapbox_style="carto-positron", zoom=9,
+                               color='area'
+                                       )
+
+    fig['data'][0]['name'] = 'Capitals'
 
     fig.add_scattermapbox(
             lat=bordersdf['caplat'],
@@ -493,7 +507,7 @@ def get_map_plot():
             hoverinfo='text'
         )
 
-    fig['data'][0]['name'] = 'Capitals'
+    fig['data'][1]['name'] = 'Capitals'
 
     fig.add_scattermapbox(
             lat=grp_map_df['lat'],
@@ -503,17 +517,17 @@ def get_map_plot():
             marker=go.scattermapbox.Marker(
                 size=grp_map_df['freq'],
                 # sizemin = 3,
-                sizemin = grp_map_df['freq'].min() * 1.5,
+                sizemin = grp_map_df['freq'].min(),
                 # sizemin = grp_map_df['freq'].min(),
                 sizemode='area',
-                sizeref=grp_map_df['freq'].max() / 3 ** 2
+                sizeref=grp_map_df['freq'].min() * 1.5
                 # sizeref=grp_map_df['freq'].max()
             ),
             hoverinfo='text'
         )
-    fig['data'][1]['showlegend']=True
-    fig['data'][1]['name']='Named Entity frequencies'
-    fig['data'][1]['legendgroup']= 'Frequencies'
+    fig['data'][2]['showlegend']=True
+    fig['data'][2]['name']='Named Entity frequencies'
+    fig['data'][2]['legendgroup']= 'Frequencies'
 
     fig.add_scattermapbox(
             lat=df_battles['lat'],
@@ -522,17 +536,23 @@ def get_map_plot():
             hovertext = df_battles['txthover'],
             # marker_symbol = 'star-stroked',
             marker=go.scattermapbox.Marker(
-                size=15,
+                size=df_battles['Duration'],
+                # sizemin = 3,
+                sizemin=df_battles['Duration'].min(),
+                # sizemin = grp_map_df['freq'].min(),
+                sizemode='area',
+                sizeref=df_battles['Duration'].min() * 1.5
+                # size=15,
                 # color='rgb(255, 0, 0)',
-                color= df_battles['Duration'],
-                showscale = True,
-                colorscale='Blackbody_r',
-                opacity=0.7
+                # color= df_battles['Duration'],
+                # showscale = True,
+                # colorscale='Blackbody_r',
+                # opacity=0.7
             ),
             hoverinfo='text'
         )
 
-    fig['data'][2]['name'] = 'Battles'
+    fig['data'][3]['name'] = 'Battles'
 
     fig.update_layout(
         autosize=True,
@@ -550,7 +570,7 @@ def get_map_plot():
         mapbox_accesstoken=token,
         mapbox={
             'style': 'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
-            'center': {'lon': 2.2137, 'lat': 46.2276},
+            # 'center': {'lon': 2.2137, 'lat': 46.2276},
             'zoom': 3,
             # 'layers': [{
             #     'source':
@@ -581,32 +601,6 @@ def get_map_plot():
         ]
 
     )
-    #
-    # fig.add_choroplethmapbox(
-    #     bordersdf,
-    #     geojson=borderjson,
-    #     featureidkey='properties.cntry_name',
-    #     locationmode='geojson-id',
-    #     # geojson=borderjson,
-    #     locations='cntry_name',
-    #     # featureidkey='properties.cntry_name',
-    #     # color='cntry_name',
-    #     # color_continuous_scale="Viridis",
-    # )
-
-
-    # print(borderjson['objects']['countryborders'].keys())
-    # fig.add_choropleth(
-    #     geojson=borderjson,
-    #     featureidkey='properties.cntry_name',
-    #     locationmode='geojson-id',
-    #     locations=bordersdf['cntry_name'],
-    #     hovertext=bordersdf['txthover'],
-    #     hoverinfo='text',
-    #     # z=bordersdf['zero'],
-    #     z = bordersdf['total_freq'],
-    #     showscale=False
-    # )
 
     return fig, map_df, grp_map_df, df_battles, df_page
 
@@ -627,21 +621,21 @@ def update_entities_plot(event):
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
-    print("MAP DF", grp_map_df)
+    # print("MAP DF", grp_map_df)
     if not map_df.empty:
         warmap['layout']['annotations'] = ()
-        entities = warmap['data'][1]
+        entities = warmap['data'][2]
         entities['lat'] = grp_map_df['lat']
         entities['lon'] = grp_map_df['lon']
         entities['hovertext'] = grp_map_df['txthover']
         entities['marker']['size'] = grp_map_df['freq']
+        # entities['marker']['sizemin'] = grp_map_df['freq'].min()
+        entities['marker']['sizeref'] = grp_map_df['freq'].min() * 1.5
+
         entities['marker']['opacity'] = 1
-
-
-
     else:
         warmap['layout']['annotations'] = ()
-        entities = warmap['data'][1]
+        entities = warmap['data'][2]
         entities['lat'] = grp_map_df['lat']
         entities['lon'] = grp_map_df['lon']
         entities['hovertext'] = grp_map_df['txthover']
@@ -667,12 +661,15 @@ def update_entities_plot(event):
     update_freq_plot(df_page)
 
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
-    battle_map = warmap['data'][2]
+    battle_map = warmap['data'][3]
     # print(battle_map['txt'])
     battle_map['lat'] = df_battles['lat']
     battle_map['lon'] = df_battles['lon']
     battle_map['hovertext'] = df_battles['txthover']
-    battle_map['marker']['color'] = df_battles['Duration']
+    # battle_map['marker']['color'] = df_battles['Duration']
+    battle_map['marker']['size'] = df_battles['Duration']
+    # entities['marker']['sizemin'] = grp_map_df['freq'].min()
+    battle_map['marker']['sizeref'] = df_battles['Duration'].min() * 1.5
 
     data_search_button.value = False
     data_search_button.button_type = 'primary'
@@ -697,8 +694,6 @@ def filter_entities_plot(event):
         & (df_battles['Duration'] <= int(max_duration.value))
     ]
 
-
-
     if map_search_bar.value:
         new_map_df = search_keyword_in_data(new_map_df, map_search_bar.value, map_checkbox)
         new_df_battles = search_keyword_in_data(new_df_battles, map_search_bar.value,
@@ -711,7 +706,7 @@ def filter_entities_plot(event):
     print("NEW MAP DF", grp_map_df)
 
     warmap['layout']['annotations'] = ()
-    entities = warmap['data'][1]
+    entities = warmap['data'][2]
     entities['lat'] = grp_map_df['lat']
     entities['lon'] = grp_map_df['lon']
     entities['hovertext'] = grp_map_df['txthover']
@@ -719,11 +714,14 @@ def filter_entities_plot(event):
 
     # df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
 
-    battle_map = warmap['data'][2]
+    battle_map = warmap['data'][3]
     battle_map['lat'] = new_df_battles['lat']
     battle_map['lon'] = new_df_battles['lon']
     battle_map['hovertext'] = new_df_battles['txthover']
-    battle_map['marker']['color'] = new_df_battles['Duration']
+    # battle_map['marker']['color'] = new_df_battles['Duration']
+    battle_map['marker']['size'] = df_battles['Duration']
+    # entities['marker']['sizemin'] = grp_map_df['freq'].min()
+    battle_map['marker']['sizeref'] = df_battles['Duration'].min() * 1.5
 
     filter_df_page = get_df_page(new_map_df, context_window)
     filter_df_page = filter_df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
@@ -740,18 +738,21 @@ def clear_filters(event):
     clear_filters_button.name = 'Clearing data ...'
 
     warmap['layout']['annotations'] = ()
-    entities = warmap['data'][1]
+    entities = warmap['data'][2]
     entities['lat'] = grp_map_df['lat']
     entities['lon'] = grp_map_df['lon']
     entities['hovertext'] = grp_map_df['txthover']
     entities['marker']['size'] = grp_map_df['freq']
 
-    battle_map = warmap['data'][2]
+    battle_map = warmap['data'][3]
     # print(battle_map['txt'])
     battle_map['lat'] = df_battles['lat']
     battle_map['lon'] = df_battles['lon']
     battle_map['hovertext'] = df_battles['txthover']
-    battle_map['marker']['color'] = df_battles['Duration']
+    # battle_map['marker']['color'] = df_battles['Duration']
+    battle_map['marker']['size'] = df_battles['Duration']
+    # entities['marker']['sizemin'] = grp_map_df['freq'].min()
+    battle_map['marker']['sizeref'] = df_battles['Duration'].min() * 1.5
 
     # df_page = search_keyword_in_data(map_df)
     # display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
@@ -1109,7 +1110,7 @@ col_text = pn.Card(
 
 )
 
-metadata_plot = px.histogram(grp_map_df, x='newspaper')
+metadata_plot = px.histogram(map_df, x='newspaper')
 
 newspapers_select_2 = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
@@ -1183,7 +1184,6 @@ template = """
             </div>
             <div class="col-lg-7">
                   {{ embed(roots.text)}}
-                  {{ embed(roots.news)}}
             </div>
 
         </div>
@@ -1276,10 +1276,11 @@ tmpl.add_panel('warmap', map_panel)
 tmpl.add_panel('progress', progress)
 tmpl.add_panel('text', col_text)
 tmpl.add_panel('textopt', col_text_options)
-tmpl.add_panel('news', col_metadata)
+# tmpl.add_panel('news', col_metadata)
 tmpl.add_panel('setting_col', setting_col)
 tmpl.servable()
 
+# map_panel.servable()
 # data_search_button.
 
 
