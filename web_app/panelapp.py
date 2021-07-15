@@ -503,7 +503,7 @@ def get_map_plot():
             marker=go.scattermapbox.Marker(
                 size=grp_map_df['freq'],
                 # sizemin = 3,
-                sizemin = grp_map_df['freq'].min(),
+                sizemin = grp_map_df['freq'].min() * 1.5,
                 # sizemin = grp_map_df['freq'].min(),
                 sizemode='area',
                 sizeref=grp_map_df['freq'].max() / 3 ** 2
@@ -621,13 +621,50 @@ def update_entities_plot(event):
     data_search_button.button_type = 'warning'
     data_search_button.name = 'Loading data ...'
 
-
     map_df = get_map_df(lg_select, newspapers_select, start_date, end_date, context_window)
     ## updates map_df to new values
 
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
+    print("MAP DF", grp_map_df)
+    if not map_df.empty:
+        warmap['layout']['annotations'] = ()
+        entities = warmap['data'][1]
+        entities['lat'] = grp_map_df['lat']
+        entities['lon'] = grp_map_df['lon']
+        entities['hovertext'] = grp_map_df['txthover']
+        entities['marker']['size'] = grp_map_df['freq']
+        entities['marker']['opacity'] = 1
+
+
+
+    else:
+        warmap['layout']['annotations'] = ()
+        entities = warmap['data'][1]
+        entities['lat'] = grp_map_df['lat']
+        entities['lon'] = grp_map_df['lon']
+        entities['hovertext'] = grp_map_df['txthover']
+        # entities['marker']['size'] = [0] * len(grp_map_df['txthover'])
+        # entities['marker'] = grp_map_df['freq']
+        entities['marker']['opacity'] = 0
+
+        # df_page = get_df_page(map_df, context_window)
+        #
+        # display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+        # table.value = display_page
+        #
+        # update_freq_plot(df_page)
+
+    #     data_search_button.button_type = 'danger'
+    #     data_search_button.name = 'No data found'
+
+    df_page = get_df_page(map_df, context_window)
+
+    display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
+    table.value = display_page
+
+    update_freq_plot(df_page)
 
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
     battle_map = warmap['data'][2]
@@ -636,25 +673,6 @@ def update_entities_plot(event):
     battle_map['lon'] = df_battles['lon']
     battle_map['hovertext'] = df_battles['txthover']
     battle_map['marker']['color'] = df_battles['Duration']
-
-    if not map_df.empty:
-        warmap['layout']['annotations'] = ()
-        entities = warmap['data'][1]
-        entities['lat'] = grp_map_df['lat']
-        entities['lon'] = grp_map_df['lon']
-        entities['hovertext'] = grp_map_df['txthover']
-        entities['marker']['size'] = grp_map_df['freq']
-
-        df_page = get_df_page(map_df, context_window)
-
-        display_page = df_page[['window_left_context', 'mention', 'window_right_context', 'article_link']]
-        table.value = display_page
-
-        update_freq_plot(df_page)
-
-    else:
-        data_search_button.button_type = 'danger'
-        data_search_button.name = 'No data found'
 
     data_search_button.value = False
     data_search_button.button_type = 'primary'
@@ -680,13 +698,17 @@ def filter_entities_plot(event):
     ]
 
 
+
     if map_search_bar.value:
         new_map_df = search_keyword_in_data(new_map_df, map_search_bar.value, map_checkbox)
-        new_df_battles = search_keyword_in_data(new_df_battles, map_search_bar.value, map_checkbox, col='label')
+        new_df_battles = search_keyword_in_data(new_df_battles, map_search_bar.value,
+                                                map_checkbox, col='label')
+
 
     groupby_data = new_map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
+    print("NEW MAP DF", grp_map_df)
 
     warmap['layout']['annotations'] = ()
     entities = warmap['data'][1]
@@ -698,7 +720,6 @@ def filter_entities_plot(event):
     # df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
 
     battle_map = warmap['data'][2]
-    # print(battle_map['txt'])
     battle_map['lat'] = new_df_battles['lat']
     battle_map['lon'] = new_df_battles['lon']
     battle_map['hovertext'] = new_df_battles['txthover']
@@ -875,7 +896,6 @@ map_panel = pn.pane.Plotly(warmap,
 @pn.depends(map_panel.param.click_data, watch=True)
 def update_on_click(click_data):
     point = click_data['points'][0]
-    print(point)
 
     pointHover = point['hovertext']
     pointHover = pointHover[pointHover.find(':') + 2:]
@@ -885,7 +905,6 @@ def update_on_click(click_data):
     entity_data = grp_map_df[
         grp_map_df['mention'] == pointHover
     ]
-    print(entity_data)
     # entity_data = grp_map_df.iloc[pointindex]
 #     <b>Wikidata link</b>: {entity_data['wikidata_link']}<br>
     md_template = f"""     <b>Entity</b>: {entity_data['mention'].values[0]}<br>
@@ -971,7 +990,6 @@ json_download = pn.widgets.FileDownload(callback=download_as_json, filename='con
 
 table_search_button.param.watch(search_entity, 'value')
 
-# clear_button.param.watch(clear_concordancer, 'value')
 
 table.add_filter(pn.bind(update_table, pattern=lg_select))
 table.add_filter(pn.bind(update_table, pattern=newspapers_select))
@@ -990,11 +1008,8 @@ def update_freq_plot(event):
     """
     Updates entities frequency plot
     """
-    # progress_bar = pn.widgets.Progress(active=True)
     pattern = search_bar.value
-    # pattern = freq_input.value
-    print('Pattern', pattern)
-    print(df_page)
+
     if pattern:
         if pattern[-1] == ',':
             pattern = pattern[:-1]
@@ -1073,7 +1088,6 @@ col_text_options = pn.Card(
                              case_checkbox,
                             context_window,
                             table_search_button,
-                            # progress,
                             csv_download,
                              xlsx_download,
                              json_download,
@@ -1086,15 +1100,16 @@ col_text_options = pn.Card(
 
 col_text = pn.Card(
                     table,
+                    x_axis_select,
                     freqplot,
-                x_axis_select,
-
-    title= 'Occurrences',
+                    title= 'Occurrences',
                    button_css_classes = ['card_layout'],
                    collapsible=False,
                 sizing_mode = 'stretch_both'
 
 )
+
+metadata_plot = px.histogram(grp_map_df, x='newspaper')
 
 newspapers_select_2 = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
@@ -1113,14 +1128,14 @@ end_date_2 = pn.widgets.DatePicker(name='End Date',
                                    )
 
 col_metadata = pn.Card(
-                            newspapers_select_2,
-                            start_date_2,
-                            end_date_2,
-                            freqplot,
-                            title='Newspapers',
-    button_css_classes=['card_layout'],
-    collapsible=False,
-sizing_mode = 'stretch_both'
+                    newspapers_select_2,
+                    start_date_2,
+                    end_date_2,
+                    metadata_plot,
+                    title='Newspapers',
+                    button_css_classes=['card_layout'],
+                    collapsible=False,
+                    sizing_mode = 'stretch_both'
 
 )
 
