@@ -127,15 +127,6 @@ with open('config.json') as f:
     db_config = URL(**db_config)
 
 def get_countryborders():
-    # borderjson = json.load(open('data/borders/countryborders.geojson'))
-    # borderscsv = pd.read_csv('data/borders/countryborders.csv')
-    # borderscsv = borderscsv[['cntry_name', 'en_cntry_name', 'fr_cntry_name', 'de_cntry_name', 'fi_cntry_name']]
-    # bordersdf = gpd.GeoDataFrame.from_file('data/borders/countryborders.geojson')
-    #
-    # bordersdf = bordersdf.merge(borderscsv, left_on='cntry_name', right_on='cntry_name')
-    # bordersdf.to_file('data/borders/countryborders_final.geojson', driver = 'GeoJSON')
-    # print(bordersdf)
-
     bordersdf = gpd.GeoDataFrame.from_file('data/borders/countryborders_final.geojson')
 
 
@@ -283,29 +274,6 @@ def get_battle_df(start_date, end_date, min_duration, max_duration, front_select
     df_battles = read_sql_tmpfile(q, engine, args)
     df_battles = get_battle_hover_text(df_battles)
     return df_battles
-#
-# def filter_country_borders(start_date, end_date, list_country):
-#     """
-#      Collect the data from the database according the values of
-#     the widgets
-#     """
-#     start_date = str(start_date.value)
-#     end_date = str(end_date.value)
-#
-#     # filtered_borders = bordersdf[
-#     #     (bordersdf['gwsdate'] <= end_date)
-#     # ]
-#
-#     # filtered_borders = bordersdf[
-#     #     bordersdf['cntry_name'].isin(list_country)
-#     # ]
-#
-#     # filtered_borders = filtered_borders.loc[list_country]
-#
-#     # return filtered_borders
-#     # return bordersdf[bordersdf['cntry_name'] == 'France']
-#
-#     return bordersdf
 
 
 def get_map_df(lg, newspaper, start_date, end_date, context_window):
@@ -352,7 +320,6 @@ def get_map_df(lg, newspaper, start_date, end_date, context_window):
         ent_df = read_sql_tmpfile(q, engine, args)
         map_df = ent_df.merge(merge_df, left_on = 'id_ent', right_on='id_ent')
 
-
         map_df['date'] = pd.to_datetime(map_df['date'], format="%Y-%m-%d")
         map_df['year'] = pd.DatetimeIndex(map_df['date']).year
         map_df['year'] = map_df['year'].astype(str)
@@ -374,7 +341,6 @@ def get_df_page(map_df, context_window):
     """
 
     """
-    print('Search :', search_bar.value)
     search_df = search_keyword_in_data(map_df, search_bar.value, case_checkbox.value)
 
     if not search_df.empty:
@@ -416,10 +382,10 @@ def get_country_freq(map_df, borders_df):
     across languages in the selected dataset
     """
 
-    borders_df['en_freq'] = borders_df['en_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
-    borders_df['fr_freq'] = borders_df['fr_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
-    borders_df['de_freq'] = borders_df['de_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
-    borders_df['fi_freq'] = borders_df['fi_cntry_name'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['en_freq'] = borders_df['en_cntry_name_smpl'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['fr_freq'] = borders_df['fr_cntry_name_smpl'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['de_freq'] = borders_df['de_cntry_name_smpl'].map(map_df['mention'].value_counts()).fillna(0)
+    borders_df['fi_freq'] = borders_df['fi_cntry_name_smpl'].map(map_df['mention'].value_counts()).fillna(0)
     borders_df['total_freq'] = borders_df['en_freq'] + borders_df['fr_freq'] + borders_df['de_freq'] + borders_df['fi_freq']
 
     return borders_df
@@ -432,15 +398,10 @@ def get_map_plot():
     groupby_data = map_df.groupby('geometry')
     grp_map_df = groupby_data.first()
     grp_map_df = grp_map_df.reset_index()
-    # map_df = map_df[
-    #     (map_df['freq'] >= 100)
-    #     & (map_df['freq'] <= 1000)
-    #     ]
 
     df_page = get_df_page(map_df, context_window)
 
     df_battles = get_battle_df(start_date, end_date, min_duration, max_duration, front_selection)
-    print(df_battles)
     # bordersdf = filter_country_borders(start_date, end_date, map_df['mention'].unique())
     bordersdf = get_countryborders()
     bordersdf = get_country_freq(map_df, bordersdf)
@@ -454,13 +415,14 @@ def get_map_plot():
                    geojson=bordersdf.geometry,
                    locations=bordersdf.index,
                    center = {'lon': 2.2137, 'lat': 46.2276},
-                   mapbox_style="carto-positron", zoom=9,
+                   mapbox_style="mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei", zoom=9,
                    color='total_freq',
                    color_continuous_scale='Brwnyl',
-                    hover_name='txthover'
+                    hover_name='txthover',
+                    labels = {'total_freq': 'Countries\' mentions'}
                                        )
 
-    fig['data'][0]['name'] = 'Capitals'
+    fig['data'][0]['name'] = 'Countries'
 
     fig.add_scattermapbox(
             lat=bordersdf['caplat'],
@@ -532,13 +494,8 @@ def get_map_plot():
         mapbox_accesstoken=token,
         mapbox={
             'style': 'mapbox://styles/gutyh/ckqwa99n501hx17qocmwr03ei',
-            # 'center': {'lon': 2.2137, 'lat': 46.2276},
             'zoom': 3,
-            # 'layers': [{
-            #     'source':
-            #     borderjson,
-            #
-            #     'type': "fill", 'below': "traces", 'color': "royalblue"}]
+
         },
         margin={'l': 0, 'r': 0, 'b': 0, 't': 0},
         updatemenus=[
@@ -549,7 +506,7 @@ def get_map_plot():
                     dict(label='Clear annotations',
                          method='update',
                          args=[
-                             {'visible':[True, True, False, False]},
+                             {'visible':[True, True, True, True, False]},
                              {'annotations':[]}
                          ]
                          )
@@ -634,9 +591,11 @@ def update_entities_plot(event):
         # battle_map['marker']['size'] = df_battles['Duration']
         # battle_map['marker']['sizeref'] = df_battles['Duration'].min() * 1.5
         battle_map['marker']['opacity'] = 0
-
+    print(bordersdf['total_freq'])
     bordersdf = get_country_freq(map_df, bordersdf)
     bordersdf = get_borders_hover_text(bordersdf)
+    print(bordersdf['total_freq'])
+
     bordersmap = warmap['data'][0]
     bordersmap['locations'] = bordersdf.index
     bordersmap['hovertext'] = bordersdf['txthover']
@@ -857,6 +816,7 @@ plot_config = {
     "displaylogo": False,
     "displayModeBar": True,
     'toImageButtonOptions': {'height': None, 'width': None, },
+    'modeBarButtonsToRemove': ['lasso2d', 'select2d']
     ## TODO: ADD DRAWING TOOLS BUT DOESNT SEEM TO WORK ON MAPS
 
 }
@@ -1114,6 +1074,9 @@ col_metadata = pn.Card(
 
 )
 
+# map_tutorial = pn.pane.Video('data/warmap_tutorial_final.mp4')
+# conc_tutorial = pn.pane.Video('https://youtu.be/gs-3tIOLo18')
+
 template = """
 
 {% extends base %}
@@ -1133,7 +1096,6 @@ template = """
     <button class="headernav">SpaceWars</button>
     <button class="tablink" onclick="openPage('Warmap', this, 'red')" id="defaultOpen">Warmap</button>
     <button class="tablink" onclick="openPage('Concordancer', this, 'green')">Concordancer</button>
-    <button class="tablink" onclick="openPage('Tutorial', this, 'orange')">Tutorial</button>
 
 </div>
 <button id="openbtn" class="btn btn-warning" onclick="displayOptions()">Select Data</button> 
@@ -1141,16 +1103,19 @@ template = """
 
 <div id="mySidebar" class="sidebar">
     {{ embed(roots.setting_col)}}
-    <div id="loadingBar">
-        {{ embed(roots.progress)}}
-    </div>
 </div>
 
 <div id="Warmap" class="tabcontent">
+    <div class="tutorial">
+        <p >Click <a href="https://youtu.be/iIpEvM9IFaM" target="blank">here</a> to access the Warmap tutorial</p>
+    </div>
     {{ embed(roots.warmap)}}
 </div>
 
 <div id="Concordancer" class="tabcontent">
+    <div class="tutorial">
+        <p >Click <a href="https://youtu.be/gs-3tIOLo18" target="blank">here</a> to access the Concordancer tutorial</p>
+    </div>
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-5">
@@ -1164,13 +1129,6 @@ template = """
     </div>
 
 </div>
-
-<div id="Tutorial" class="tabcontent">
-ADD VIDEOS
-
-</div>
-
-
 
 <script>
 
@@ -1240,16 +1198,19 @@ window.onclick = function(event) {
 # {{ embed(roots.tabs)}}
 #     {{ embed(roots.warmap)}}
 # conc_panel = pn.Row(col_table, col_freq, col_metadata)
-progress = pn.widgets.Progress(active = True)
-
+# progress = pn.widgets.Progress(active = True)
+# /home/nicolas/SpaceWars/web_app/data/warmap_tutorial_final.mp4
 
 conc_panel = pn.Row(col_text_options, col_text, col_metadata, )
 tmpl = pn.Template(template)
 tmpl.add_variable('html_title', 'SpaceWars')
 tmpl.add_panel('warmap', map_panel)
-tmpl.add_panel('progress', progress)
+# tmpl.add_panel('progress', progress)
 tmpl.add_panel('text', col_text)
 tmpl.add_panel('textopt', col_text_options)
 # tmpl.add_panel('news', col_metadata)
 tmpl.add_panel('setting_col', setting_col)
+# tmpl.add_panel('map_tuto', map_tutorial)
+# tmpl.add_panel('conc_tuto', conc_tutorial)
+
 tmpl.servable()

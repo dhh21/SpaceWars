@@ -1,15 +1,17 @@
  /* The sidebar menu */
 .sidebar {
-  height: 100%; /* 100% Full-height */
-  width: 0; /* 0 width - change this with JavaScript */
+  height: 0%; /* 100% Full-height */
+  width: 30%; /* 0 width - change this with JavaScript */
   position: fixed; /* Stay in place */
   z-index: 1; /* Stay on top */
   top: 0;
   left: 0;
-        background-color: rgba(100, 100, 100, 0.5);
+   background-color: transparent;
   overflow-x: hidden; /* Disable horizontal scroll */
-  padding-top: 60px; /* Place content 60px from the top */
-  transition: 0.5s; /* 0.5 second transition effect to slide in the sidebar */
+  transition: 0.2s; /* 0.5 second transition effect to slide in the sidebar */
+    margin-top: 3.5em;
+    margin-left: 8em;
+  overflow: hidden; /* Hide scrollbars */
 }
 
 /* The sidebar links */
@@ -37,13 +39,11 @@
 }
 
 /* The button used to open the sidebar */
-.openbtn {
-  font-size: 20px;
-  cursor: pointer;
-  background-color: #111;
-  color: white;
-  padding: 10px 15px;
-  border: none;
+#openbtn {
+position: fixed;
+top: 0;
+z-index: 100;
+    margin: 4em 0em 0em 1em;
 }
 
 .openbtn:hover {
@@ -71,6 +71,7 @@ body, html {
   height: 100%;
   margin: 0;
   font-family: Arial;
+  padding-top: 1.5em;
 }
 
 /* Style tab links */
@@ -83,7 +84,7 @@ body, html {
   cursor: pointer;
   padding: 14px 16px;
   font-size: 18px;
-  width: 18%;
+  width: 22.5%;
 
 }
 
@@ -107,7 +108,7 @@ body, html {
 /* Style the tab content (and add height:100% for full page content) */
 .tabcontent {
   display: none;
-  padding-top: 10px;
+  margin-top: 4em;
   height: 100%;
 }
 
@@ -142,4 +143,83 @@ body, html {
 
 .card_layout {
     width: 30%;
+}
+
+
+ /* Dropdown Button */
+.dropbtn {
+  background-color: #555;
+  color: white;
+  float: left;
+  padding: 14px 16px;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+.tablink {
+  background-color: #555;
+  color: white;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 18px;
+  width: 45%;
+
+
+}
+
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus, .tablink:hover{
+  background-color: #2980B9;
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  width: 22.5%;
+
+
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: transparent;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}
+
+#loadingBar {
+    display: none;
+}
+.mapopup{
+    padding: 15px;
+    font-size: 20px;
+    border-radius: 5px;
+}
+
+.tutorial {
+margin-left: 8em;
+margin-top: -2.5em;
 }

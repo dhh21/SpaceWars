@@ -1,3 +1,3 @@
 #!/bin/bash
 
-panel serve panelapp.py --show --autoreload
+panel serve panelapp.py --show
