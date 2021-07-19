@@ -176,14 +176,14 @@ widget_values = get_widget_values()
 
 lg_select = pn.widgets.MultiSelect(name= 'Language Selection',
                                    value =
-                                   # ['French', 'German', 'Finnish'],
-                                   ['French'],
+                                   ['French', 'German', 'Finnish'],
+                                   # ['French'],
                                     options = list(dic_lg.keys()))
 
 newspapers_select = pn.widgets.MultiSelect(name='Newspapers',
                                            value =
-                                           # ['Arbeiter-Zeitung', 'Helsingin Sanomat', 'Le Matin'],
-                                           ['Le Matin'],
+                                           ['Arbeiter-Zeitung', 'Helsingin Sanomat', 'Le Matin'],
+                                           # ['Le Matin'],
 
                                             options= list(dic_news.keys()))
 
@@ -419,7 +419,7 @@ def get_map_plot():
                    color='total_freq',
                    color_continuous_scale='Brwnyl',
                     hover_name='txthover',
-                    labels = {'total_freq': 'Countries\' mentions'}
+                    labels = {'total_freq': 'Country mention frequency'}
                                        )
 
     fig['data'][0]['name'] = 'Countries'
