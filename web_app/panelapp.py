@@ -1130,6 +1130,10 @@ template = """
 
 </div>
 
+<div class="footer-wrapper">
+    <p class="footer-text">Interface created by&nbsp;<a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a></p>
+</div>
+
 <script>
 
 
