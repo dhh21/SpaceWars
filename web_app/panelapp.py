@@ -1131,7 +1131,19 @@ template = """
 </div>
 
 <div class="footer-wrapper">
-    <p class="footer-text">Interface created by&nbsp;<a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a></p>
+    
+    <p class="footer-text">&nbsp;
+        The data of this webapp come from the&nbsp;
+        <a class="footer-anchor" href="https://platform.newseye.eu/fr" target="_blank">NewsEye project</a>. 
+        The web interface has been created by&nbsp;<a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a><br>,
+        and the data processing made by 
+        &nbsp;<a class="footer-anchor" href="mailto:oleg.harlamov@fau.de">Oleg Harlamov</a><br>,
+         &nbsp;<a class="footer-anchor" href="mailto:axel.jean-caurant@univ-lr.fr">Axel Jean-Caurant</a><br>, 
+         &nbsp;<a class="footer-anchor" href="mailto:karimi.farimah@gmail.com">Farimah Karimi</a><br>, 
+         &nbsp;<a class="footer-anchor" href="mailto:lidia.pivovarova@helsinki.fi">Lidia Pivovarova</a><br> 
+         &nbsp;and &nbsp;<a class="footer-anchor" href="mailto:haoyu.wei@helsinki.fi">Haoyu Wei</a><br>
+    </p>
+
 </div>
 
 <script>
