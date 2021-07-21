@@ -1131,19 +1131,33 @@ template = """
 </div>
 
 <div class="footer-wrapper">
-    
-    <p class="footer-text">&nbsp;
-        The data of this webapp come from the&nbsp;
-        <a class="footer-anchor" href="https://platform.newseye.eu/fr" target="_blank">NewsEye project</a>. 
-        The web interface has been created by&nbsp;<a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a><br>,
-        and the data processing made by 
-        &nbsp;<a class="footer-anchor" href="mailto:oleg.harlamov@fau.de">Oleg Harlamov</a><br>,
-         &nbsp;<a class="footer-anchor" href="mailto:axel.jean-caurant@univ-lr.fr">Axel Jean-Caurant</a><br>, 
-         &nbsp;<a class="footer-anchor" href="mailto:karimi.farimah@gmail.com">Farimah Karimi</a><br>, 
-         &nbsp;<a class="footer-anchor" href="mailto:lidia.pivovarova@helsinki.fi">Lidia Pivovarova</a><br> 
-         &nbsp;and &nbsp;<a class="footer-anchor" href="mailto:haoyu.wei@helsinki.fi">Haoyu Wei</a><br>
-    </p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-3">
+                <p class="footer-text">The data of this webapp come from the&nbsp;
+                 <a class="footer-anchor" href="https://platform.newseye.eu/fr" target="_blank">NewsEye project</a>.<p>
+            </div>
+            <div class="col-lg-3">
+                    <p class="footer-text">The frontiers as displayed here come from the 
+                    <a class="footer-anchor" href="https://icr.ethz.ch/data/cshapes/" target="_blank">CShapes 2.0 dataset</a>.</p>
+            </div>
+            <div class="col-lg-3">
+                <p class="footer-text">The web interface has been created by&nbsp;
+                <a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a></p>
+            </div>
+            <div class="col-lg-3">
+                <p class="footer-text">
+                    The data processing made by 
+                    &nbsp;<a class="footer-anchor" href="mailto:oleg.harlamov@fau.de">Oleg Harlamov</a>,
+                     &nbsp;<a class="footer-anchor" href="mailto:axel.jean-caurant@univ-lr.fr">Axel Jean-Caurant</a>, 
+                     &nbsp;<a class="footer-anchor" href="mailto:karimi.farimah@gmail.com">Farimah Karimi</a>, 
+                     &nbsp;<a class="footer-anchor" href="mailto:lidia.pivovarova@helsinki.fi">Lidia Pivovarova</a> 
+                     &nbsp;and &nbsp;<a class="footer-anchor" href="mailto:haoyu.wei@helsinki.fi">Haoyu Wei</a>
+                </p>
+             </div>
 
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1216,6 +1230,18 @@ window.onclick = function(event) {
 # conc_panel = pn.Row(col_table, col_freq, col_metadata)
 # progress = pn.widgets.Progress(active = True)
 # /home/nicolas/SpaceWars/web_app/data/warmap_tutorial_final.mp4
+#     <p class="footer-text">&nbsp;
+#         The data of this webapp come from the&nbsp;
+#         <a class="footer-anchor" href="https://platform.newseye.eu/fr" target="_blank">NewsEye project</a>.<br><br>
+#         The frontiers as displayed here come from the <a class="footer-anchor" href="https://icr.ethz.ch/data/cshapes/" target="_blank">CShapes 2.0 dataset</a>.
+#         The web interface has been created by&nbsp;<a class="footer-anchor" href="mailto:nicolas.gutehrle@univ-fcomte.fr">Nicolas Gutehrlé</a><br>,
+#         and the data processing made by
+#         &nbsp;<a class="footer-anchor" href="mailto:oleg.harlamov@fau.de">Oleg Harlamov</a><br>,
+#          &nbsp;<a class="footer-anchor" href="mailto:axel.jean-caurant@univ-lr.fr">Axel Jean-Caurant</a><br>,
+#          &nbsp;<a class="footer-anchor" href="mailto:karimi.farimah@gmail.com">Farimah Karimi</a><br>,
+#          &nbsp;<a class="footer-anchor" href="mailto:lidia.pivovarova@helsinki.fi">Lidia Pivovarova</a><br>
+#          &nbsp;and &nbsp;<a class="footer-anchor" href="mailto:haoyu.wei@helsinki.fi">Haoyu Wei</a><br>
+#     </p>
 
 conc_panel = pn.Row(col_text_options, col_text, col_metadata, )
 tmpl = pn.Template(template)
