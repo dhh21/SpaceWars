@@ -1147,7 +1147,7 @@ template = """
             </div>
             <div class="col-lg-3">
                 <p class="footer-text">
-                    The data processing made by 
+                    The data processing was done by 
                     &nbsp;<a class="footer-anchor" href="mailto:oleg.harlamov@fau.de">Oleg Harlamov</a>,
                      &nbsp;<a class="footer-anchor" href="mailto:axel.jean-caurant@univ-lr.fr">Axel Jean-Caurant</a>, 
                      &nbsp;<a class="footer-anchor" href="mailto:karimi.farimah@gmail.com">Farimah Karimi</a>, 
