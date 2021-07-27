@@ -1,72 +1,131 @@
+from angle_based import AngleBased
+from l_method import L_method
 from os import listdir
-from os.path import isdir, join, abspath
+from os.path import isfile, join, abspath
 
 import pandas as pd
+import numpy as np
 
-from fuzzywuzzy import fuzz, process
-from scipy.spatial.distance import pdist
+from fuzzywuzzy import fuzz
+from scipy.spatial.distance import cdist
 
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.metrics import pairwise_distances as pdist
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline
 
 import matplotlib.pyplot as plt
 
-import numpy as np
+import gc
+
+from tqdm import tqdm
+
+import re
+
+from os import makedirs
 
 
 ROOT = abspath('..')
+OUTPUT_DIR = 'output_clean'
+
+vectorizer = Pipeline([
+    ('bow', CountVectorizer(lowercase=True, ngram_range=(1, 5), analyzer='char_wb')),
+    # ('tfidf', TfidfTransformer())
+])
 
 
-query = 'Helsingfors'
-metric = 'cosine'
+punct = re.compile(r"[:\.,'/\s]")
 
-bower = CountVectorizer(lowercase=True, ngram_range=(1, 5), analyzer='char_wb')
+
+papers = ['arbeiter_zeitung', 'helsingin_sanomat',
+            'illustrierte_kronen_zeitung', 'le_matin', 'l_oeuvre']
 
 
 for year in filter(lambda x: x.startswith('19'), listdir('../entities')):
     year_dir = join(ROOT, 'entities', year)
 
-    for paper in filter(lambda x: x.endswith('.json'), listdir(year_dir)):
+    for paper in papers: #filter(lambda x: x.endswith('.json'), listdir(year_dir)):
         
-        data = pd.read_json(join(year_dir, paper))
+        print('Reading', join(year_dir, paper))
+
+        PATH = join(OUTPUT_DIR, year, paper.split('.json')[0])
+        makedirs(PATH, exist_ok=True)
+
+        if not isfile(join(year_dir, paper + '.json')) or isfile(join(PATH, 'freqs.csv')): continue
+
+        data = pd.read_json(join(year_dir, paper  + '.json'))
 
         data_counts = data.mention.value_counts()
 
-        print(data_counts)
+        del [[data]]
+        gc.collect()        
 
-        X = bower.fit_transform(data_counts.index)
+        # plt.figure()
+        # data_counts.iloc[:100].plot()
+        # plt.savefig('mention_freqs.png')
 
-        dists = pd.DataFrame(pdist(X, metric=metric, n_jobs=-1), columns=data_counts.index, index=data_counts.index)
+        X = vectorizer.fit_transform(data_counts.index)
+        
+        print(X.shape)
 
-        sims = 1 - dists
+        freqs = pd.DataFrame(data_counts)
 
-        nns = pd.DataFrame(sims[query].sort_values(ascending=False))
-        nns.rename(columns={query:metric}, inplace=True)
+        # freqs.drop(freqs.iloc[freqs.shape[0] // 10 : ].index, axis=0, inplace=True)
 
-        # nns['str_len'] = [len(s) for s in nns.index]
-        nns['levenshtein'] = [(fuzz.ratio(query.lower(), s.lower()) / 100) for s in nns.index]
+        # l_method = L_method()
+        # l_method.fit(freqs, 'mention')
 
-        # print(nns)
+        visited = []
 
-        nns.plot(alpha=.5)
-        plt.savefig('similarity.png')
+        for query in freqs.iloc[: 100].index.tolist():
+            if query in visited: continue
 
-        # nns.loc[nns.cosine < .5].str_len.plot()
-        # plt.savefig('str_len.png')
+            trimmed_query = punct.sub('', query)
+            candidates_fname = join(PATH, f'{trimmed_query}_candidates.csv')
 
-        # nns.loc[nns.cosine < .5].fuzzy.plot()
-        # plt.savefig('fuzzy.png')
+            if isfile(candidates_fname): continue
 
-        for item in filter(lambda x: x.cosine > .5, nns.itertuples()):
-            print(f'[{item.Index}] : {item.cosine:.4}')
+            print(f'QUERY: [{query}]')
 
-        # nns.to_csv('test.csv')
-        break
+            query_vec = vectorizer.transform([query])
 
-    break
+            n_batches = 100
+            batch_size = int(X.shape[0] / n_batches)
+
+            ### first batch initialized
+            dists = 1 - cdist(query_vec.A, X[:batch_size].A, metric='cosine').T
+
+            ### loop starts with 2nd iteration!
+            for batch_idx in tqdm(range(1, n_batches+1), desc='Calculating distances'):
+                start_idx = batch_idx*batch_size
+                end_idx = (batch_idx+1)*batch_size if batch_idx < n_batches else data_counts.shape[0]
+
+                current_dists = 1 - cdist(query_vec.A, X[start_idx : end_idx].A, metric='cosine').T
+
+                dists = np.vstack((dists, current_dists))
+
+            dists = pd.DataFrame(dists, index=data_counts.index, columns=['cos'])
+
+            dists['freqs'] = data_counts
+
+            dists.sort_values(ascending=False, by='cos', inplace=True)
+
+            dists['levenshtein'] = [(fuzz.ratio(query.lower(), s.lower()) / 100) for s in dists.index]
+
+            # dists.drop(dists.iloc[dists.shape[0] // 4:].index, axis=0, inplace=True)
+
+            # angle_method = AngleBased(5)
+            # angle_method.fit(dists, 'cos')
+
+            l_method = L_method()
+            l_method.fit(dists, 'cos')
 
 
+            l_method.plot_loss(join(PATH, f'{trimmed_query}_loss'))
+            l_method.plot_cutoff(dists, ['cos', 'levenshtein'], join(PATH, f'{trimmed_query}_cutoff'), title=query)
 
-def get_fuzz(data_counts, query):
-    for mention in data_counts.index.tolist():
-        print(mention, fuzz.ratio(query, mention))
+            dists = dists.iloc[:l_method.current_knee]
+            visited.extend(dists.index.tolist())
+
+            dists['query'] = [query] * l_method.current_knee
+            dists.to_csv(candidates_fname)
+
+            data_counts.to_csv(join(PATH, 'freqs.csv'))
